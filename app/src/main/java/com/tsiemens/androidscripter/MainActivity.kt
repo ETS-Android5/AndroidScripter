@@ -1,24 +1,77 @@
 package com.tsiemens.androidscripter
 
+import android.content.Intent
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import com.chaquo.python.Python
+import com.chaquo.python.android.AndroidPlatform
 
 import kotlinx.android.synthetic.main.activity_main.*
+import android.app.ActivityManager
+import android.content.Context
+import android.support.design.widget.Snackbar
+import android.widget.Button
+
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        val TAG = MainActivity::class.java.simpleName
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
+        tryGuaranteeUsageStatsAccess(this)
+
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+            Snackbar.make(view, "Clicked FAB", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
         }
+
+        val startBtn = findViewById<Button>(R.id.start_button)
+        val stopBtn = findViewById<Button>(R.id.stop_button)
+
+        startBtn.setOnClickListener {
+            val dataHelper = DataUtilHelper(this)
+
+            val example1Script = dataHelper.getAssetUtf8Data("example1.py")
+            Log.d(TAG, "example1Script: $example1Script")
+
+            ScriptDriver(this).runScript(example1Script)
+
+            if (!isMyServiceRunning(ScriptService::class.java)) {
+                Intent(this, ScriptService::class.java).also { intent ->
+                    startService(intent)
+                }
+            }
+        }
+
+        stopBtn.setOnClickListener {
+            if (isMyServiceRunning(ScriptService::class.java)) {
+                Intent(this, ScriptService::class.java).also { intent ->
+                    stopService(intent)
+                }
+            }
+        }
+
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(this))
+        }
+    }
+
+    private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
+        val manager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.name == service.service.className) {
+                return true
+            }
+        }
+        return false
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
