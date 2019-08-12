@@ -3,20 +3,23 @@ package com.tsiemens.androidscripter
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.app.Dialog
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Path
 import android.graphics.Point
 import android.os.Bundle
 import android.os.Handler
-import android.os.Message
-import android.os.Messenger
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.support.v4.content.LocalBroadcastManager
+
+
 
 class NodeHandle(val node : AccessibilityNodeInfo) {
     var refCount = 1
@@ -47,16 +50,29 @@ class NodeHandle(val node : AccessibilityNodeInfo) {
 class ScriptService2 : AccessibilityService() {
 //    var lastNode : NodeHandle? = null
 //    var lastWindowStateNode : NodeHandle? = null
+    companion object {
+        val TAG = ScriptService2::class.java.simpleName
+
+        val ACTION_TO_SERVICE = "com.tsiemens.androidscripter.LBcastToScriptService"
+        val ACTION_FROM_SERVICE = "com.tsiemens.androidscripter.LBcastFromScriptService"
+    }
+
     var currWindowPackage : String? = null
     var currWindowActivity : String? = null
 
-    companion object {
-        val TAG = ScriptService2::class.java.simpleName
+    private class ServiceBcastReceiver(val service: ScriptService2) : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            service.onReceiveBcast(intent)
+        }
     }
+    private val bcastReceiver = ServiceBcastReceiver(this)
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.d(TAG, "Service connected")
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            bcastReceiver, IntentFilter(ACTION_TO_SERVICE))
     }
 
     override fun onInterrupt() {}
@@ -95,6 +111,11 @@ class ScriptService2 : AccessibilityService() {
         if (event.source?.text != "DUMMY") {
             return
         }
+
+        event.source?.apply {
+            recycle()
+        }
+        return
 
         // Commented, but this does work
         // pressBackButton()
@@ -142,7 +163,31 @@ class ScriptService2 : AccessibilityService() {
     override fun onUnbind(intent: Intent?): Boolean {
         val ret = super.onUnbind(intent)
         Log.i(TAG, "onUnbind")
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(bcastReceiver)
         return ret
+    }
+
+    fun onReceiveBcast(intent: Intent) {
+        val type = intent.getStringExtra("type")
+        Log.d(TAG, "onReceiveBcast $type")
+        when(type) {
+            ServiceBcast.TYPE_RUN_SCRIPT -> {
+                Thread(
+                    Runnable {
+                        val dataHelper = DataUtilHelper(this)
+                        val scriptName = intent.getStringExtra("script")
+                        val script = dataHelper.getAssetUtf8Data(scriptName)
+                        Log.i(TAG, "Running script $scriptName")
+                        ScriptDriver(this).runScript(script)
+                    }).start()
+            }
+        }
+
+        // Send ack
+        val outIntent = Intent()
+        outIntent.action = ACTION_FROM_SERVICE
+        outIntent.putExtra("type", type)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(outIntent)
     }
 
     fun makeClickGesturePercent(xPct: Float, yPct: Float): GestureDescription {
@@ -198,5 +243,21 @@ class AccessibilitySettingDialogFragment : DialogFragment() {
             // Create the AlertDialog object and return it
             builder.create()
         } ?: throw IllegalStateException("Activity cannot be null")
+    }
+}
+
+class ServiceBcast {
+    companion object {
+        val TYPE_RUN_SCRIPT = "runScript"
+    }
+}
+
+class ServiceBcastClient(val context: Context) {
+    fun sendRunScript(scriptName: String) {
+        val outIntent = Intent()
+        outIntent.action = ScriptService2.ACTION_TO_SERVICE
+        outIntent.putExtra("type", ServiceBcast.TYPE_RUN_SCRIPT)
+        outIntent.putExtra("script", scriptName)
+        LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
     }
 }

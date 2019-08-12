@@ -13,13 +13,23 @@ import kotlinx.android.synthetic.main.activity_main.*
 import android.app.ActivityManager
 import android.content.Context
 import android.support.design.widget.Snackbar
+import android.support.v4.content.LocalBroadcastManager
 import android.widget.Button
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 
+private class MyReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        Log.d("MyReceiver", "onReceive")
+    }
+}
 
 class MainActivity : AppCompatActivity() {
     companion object {
         val TAG = MainActivity::class.java.simpleName
     }
+
+    val bcastReceiver : BroadcastReceiver? = MyReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +51,6 @@ class MainActivity : AppCompatActivity() {
 
             val example1Script = dataHelper.getAssetUtf8Data("example1.py")
             Log.d(TAG, "example1Script: $example1Script")
-
             ScriptDriver(this).runScript(example1Script)
 
             if (!isMyServiceRunning(ScriptService::class.java)) {
@@ -59,6 +68,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val testBcastBtn = findViewById<Button>(R.id.testbcast_button)
+        testBcastBtn.setOnClickListener {
+            ServiceBcastClient(this).sendRunScript("example1.py")
+        }
+
         if (!isMyServiceRunning(ScriptService2::class.java)) {
             AccessibilitySettingDialogFragment().show(supportFragmentManager, "")
         }
@@ -66,6 +80,19 @@ class MainActivity : AppCompatActivity() {
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(this))
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            bcastReceiver!!,
+            IntentFilter(ScriptService2.ACTION_FROM_SERVICE)
+        )
+    }
+
+    override fun onPause() {
+        super.onPause()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(bcastReceiver!!)
     }
 
     private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
