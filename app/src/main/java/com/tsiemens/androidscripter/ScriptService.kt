@@ -7,8 +7,6 @@ import android.os.IBinder
 import android.util.Log
 import android.app.ActivityManager
 import android.content.Context
-import android.view.WindowManager
-import android.view.accessibility.AccessibilityEvent
 
 class ScriptService : Service() {
 
