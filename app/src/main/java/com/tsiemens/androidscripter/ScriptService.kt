@@ -7,6 +7,8 @@ import android.os.IBinder
 import android.util.Log
 import android.app.ActivityManager
 import android.content.Context
+import android.view.WindowManager
+import android.view.accessibility.AccessibilityEvent
 
 class ScriptService : Service() {
 
@@ -26,6 +28,10 @@ class ScriptService : Service() {
             }
 
             Log.d(TAG, getUsageStatsForegroundActivityName(this@ScriptService) ?: "no usage stats activity")
+
+            defer(Runnable {
+                // sendTouchEvent(this@ScriptService, 0.95f, 0.95f )
+            }, 1000)
             // defer(this, 1000)
         }
     }
@@ -45,6 +51,11 @@ class ScriptService : Service() {
 
     fun defer(runnable: Runnable, delayMillis: Long) {
         val handler = Handler()
+        handler.postDelayed(runnable, delayMillis)
+    }
+
+    fun deferToMainThread(runnable: Runnable, delayMillis: Long) {
+        val handler = Handler(mainLooper)
         handler.postDelayed(runnable, delayMillis)
     }
 

@@ -1,11 +1,9 @@
 package com.tsiemens.androidscripter
 
-import android.annotation.TargetApi
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import java.util.*
@@ -16,7 +14,6 @@ class SysUtil {
     }
 }
 
-@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 fun getUsageStatsForegroundActivityName(ctx: Context): String? {
     val mUsageStatsManager =
         ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -36,7 +33,6 @@ fun getUsageStatsForegroundActivityName(ctx: Context): String? {
             mySortedMap.put(usageStats.lastTimeUsed, usageStats)
         }
         if (!mySortedMap.isEmpty()) {
-            val thing = mySortedMap.get(mySortedMap.lastKey())!!
             topActivity = mySortedMap.get(mySortedMap.lastKey())!!.packageName
             Log.i(SysUtil.TAG, "topActivity: " + topActivity!!)
         }
@@ -48,4 +44,8 @@ fun tryGuaranteeUsageStatsAccess(ctx: Context) {
     if (getUsageStatsForegroundActivityName(ctx) == null) {
         ctx.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
     }
+}
+
+fun launchAccessibilitySettings(ctx: Context) {
+    ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
 }

@@ -59,6 +59,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        if (!isMyServiceRunning(ScriptService2::class.java)) {
+            AccessibilitySettingDialogFragment().show(supportFragmentManager, "")
+        }
+
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(this))
         }
