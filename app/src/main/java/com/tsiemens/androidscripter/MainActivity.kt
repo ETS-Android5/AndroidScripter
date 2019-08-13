@@ -17,6 +17,7 @@ import android.support.v4.content.LocalBroadcastManager
 import android.widget.Button
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
+import android.media.projection.MediaProjectionManager
 
 private class MyReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     val bcastReceiver : BroadcastReceiver? = MyReceiver()
+    var projectionManager : MediaProjectionManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +39,8 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         tryGuaranteeUsageStatsAccess(this)
+
+        projectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
 
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Clicked FAB", Snackbar.LENGTH_LONG)
@@ -71,6 +75,14 @@ class MainActivity : AppCompatActivity() {
         val testBcastBtn = findViewById<Button>(R.id.testbcast_button)
         testBcastBtn.setOnClickListener {
             ServiceBcastClient(this).sendRunScript("example1.py")
+        }
+
+        val testOcrBtn = findViewById<Button>(R.id.ocr_button)
+        testOcrBtn.setOnClickListener {
+            //ServiceBcastClient(this).sendDoOcr()
+            val PERMISSION_CODE = 1
+            // startActivityForResult(projectionManager!!.createScreenCaptureIntent(), PERMISSION_CODE)
+            startActivity(Intent(this, ScreenCaptureImageActivity::class.java))
         }
 
         if (!isMyServiceRunning(ScriptService2::class.java)) {

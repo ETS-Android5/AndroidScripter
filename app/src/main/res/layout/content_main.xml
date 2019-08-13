@@ -17,7 +17,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.1"/>
     <Button
             android:id="@+id/stop_button"
             android:layout_width="100dp"
@@ -37,7 +38,8 @@
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@id/stop_button"
-            app:layout_constraintVertical_bias="0.1"/>
+            app:layout_constraintVertical_bias="0.1"
+    />
 
     <Button
             android:id="@+id/testbcast_button"
@@ -51,6 +53,7 @@
             app:layout_constraintVertical_bias="0.1"/>
 
     <Button
+            android:id="@+id/dummy2_button"
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:text="Dummy 2"
@@ -58,6 +61,17 @@
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@id/testbcast_button"
+            app:layout_constraintVertical_bias="0.1"/>
+
+    <Button
+            android:id="@+id/ocr_button"
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:text="Test OCR"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/dummy2_button"
             app:layout_constraintVertical_bias="0.1"/>
 
 

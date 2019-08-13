@@ -18,6 +18,15 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.support.v4.content.LocalBroadcastManager
+import android.util.DisplayMetrics
+import android.media.projection.MediaProjection
+import android.support.v4.content.ContextCompat.getSystemService
+import android.media.projection.MediaProjectionManager
+import android.media.MediaRecorder
+
+
+
+
 
 
 
@@ -95,8 +104,8 @@ class ScriptService2 : AccessibilityService() {
         when(event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 typeStr = "WINDOW_STATE_CHANGED"
-                currWindowPackage = event.packageName.toString()
-                currWindowActivity = event.className.toString()
+                currWindowPackage = event.packageName?.toString()
+                currWindowActivity = event.className?.toString()
 //                lastWindowStateNode?.dec()
 //                lastWindowStateNode = lastNode
 //                lastNode?.inc()
@@ -181,6 +190,9 @@ class ScriptService2 : AccessibilityService() {
                         ScriptDriver(this).runScript(script)
                     }).start()
             }
+            ServiceBcast.TYPE_OCR_SCREENSHOT -> {
+                doOcr()
+            }
         }
 
         // Send ack
@@ -228,6 +240,10 @@ class ScriptService2 : AccessibilityService() {
         val handler = Handler(mainLooper)
         handler.postDelayed(runnable, delayMillis)
     }
+
+   fun doOcr() {
+
+   }
 }
 
 class AccessibilitySettingDialogFragment : DialogFragment() {
@@ -249,6 +265,7 @@ class AccessibilitySettingDialogFragment : DialogFragment() {
 class ServiceBcast {
     companion object {
         val TYPE_RUN_SCRIPT = "runScript"
+        val TYPE_OCR_SCREENSHOT = "ocrScreenshot"
     }
 }
 
@@ -260,4 +277,64 @@ class ServiceBcastClient(val context: Context) {
         outIntent.putExtra("script", scriptName)
         LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
     }
+
+    fun sendDoOcr() {
+        val outIntent = Intent()
+        outIntent.action = ScriptService2.ACTION_TO_SERVICE
+        outIntent.putExtra("type", ServiceBcast.TYPE_OCR_SCREENSHOT)
+        LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
+    }
+}
+
+class RecorderHelper(val context: Context) {
+//    val mMediaProjectionManager = MediaProjection()
+
+    val mProjectionManager : MediaProjectionManager =
+        context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+    var mMediaRecorder : MediaRecorder = MediaRecorder()
+
+    fun otherstuff() {
+        val metrics = DisplayMetrics()
+//        getWindowManager().getDefaultDisplay().getMetrics(metrics)
+//        mScreenDensity = metrics.densityDpi
+
+
+    }
+
+//    fun stuff() {
+//        val TAG = "RecorderHelper"
+//        Log.d(TAG, "startScreenRecord:sMuxer=$sMuxer")
+//        synchronized(sSync) {
+//            if (sMuxer == null) {
+//                val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
+//                // get MediaProjection
+//                val projection = mMediaProjectionManager.getMediaProjection(resultCode, intent)
+//                if (projection != null) {
+//                    val metrics = getResources().getDisplayMetrics()
+//                    val density = metrics.densityDpi
+//
+//                    if (DEBUG) Log.v(TAG, "startRecording:")
+//                    try {
+//                        sMuxer = MediaMuxerWrapper(".mp4") // if you record audio only, ".m4a" is also OK.
+//                        if (true) {
+//                            // for screen capturing
+//                            MediaScreenEncoder(
+//                                sMuxer, mMediaEncoderListener,
+//                                projection, metrics.widthPixels, metrics.heightPixels, density
+//                            )
+//                        }
+//                        if (true) {
+//                            // for audio capturing
+//                            MediaAudioEncoder(sMuxer, mMediaEncoderListener)
+//                        }
+//                        sMuxer.prepare()
+//                        sMuxer.startRecording()
+//                    } catch (e: IOException) {
+//                        Log.e(TAG, "startScreenRecord:", e)
+//                    }
+//
+//                }
+//            }
+//        }
+//    }
 }
