@@ -5,6 +5,7 @@
     <uses-permission xmlns:tools="http://schemas.android.com/tools"
                      android:name="android.permission.PACKAGE_USAGE_STATS"
                      tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
             android:allowBackup="true"

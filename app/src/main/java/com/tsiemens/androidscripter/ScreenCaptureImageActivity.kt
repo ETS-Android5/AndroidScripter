@@ -1,34 +1,30 @@
 package com.tsiemens.androidscripter
 
+import android.Manifest
 import android.hardware.display.VirtualDisplay
-import android.support.v4.app.ActivityCompat.startActivityForResult
-import android.graphics.Bitmap.CompressFormat
 import android.graphics.Bitmap
-import android.media.Image.Plane
-import android.media.ImageReader.OnImageAvailableListener
-import android.graphics.ImageFormat
-import android.R.attr.y
-import android.R.attr.x
-import android.view.Display
 import android.hardware.display.DisplayManager
-import android.util.DisplayMetrics
 import android.content.Intent
 import android.os.Looper
-import android.content.Context.MEDIA_PROJECTION_SERVICE
-import android.support.v4.content.ContextCompat.getSystemService
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import android.media.projection.MediaProjection
 import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Point
 import android.media.Image
 import android.media.ImageReader
+import android.os.Environment
 import android.os.Handler
+import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
+import com.googlecode.tesseract.android.TessBaseAPI
+import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
@@ -42,12 +38,21 @@ class ScreenCaptureImageActivity : Activity() {
     private var imagesProduced: Int = 0
     private var startTimeInMillis: Long = 0
 
+    private var lastCapTs = 0L
+    private val minCapGap = 1000
+
+    private var savedBitmap : Bitmap? = null
+
+    private var mImgView : ImageView? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_imgcap)
 
         // call for the projection manager
         mProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+
+        mImgView = findViewById(R.id.bitmap_imgview) as ImageView
 
         // start projection
         val startButton = findViewById(R.id.startButton) as Button
@@ -75,10 +80,19 @@ class ScreenCaptureImageActivity : Activity() {
                 Looper.loop()
             }
         }.start()
+
+        prepareTesseract(false)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        Log.d(TAG, "onActivityResult $requestCode")
         if (requestCode == REQUEST_CODE) {
+            val curTime = System.currentTimeMillis()
+            if ((curTime - minCapGap) < lastCapTs){
+                return
+            }
+            lastCapTs = curTime
+
             // for statistics -- init
             imagesProduced = 0
             startTimeInMillis = System.currentTimeMillis()
@@ -120,21 +134,26 @@ class ScreenCaptureImageActivity : Activity() {
 
                         Log.d(TAG, "onImageAvailable")
                         try {
-                            Log.d(TAG, "1")
                             image = mImageReader!!.acquireLatestImage()
-                            Log.d(TAG, "2")
                             if (image != null) {
-                                Log.d(TAG, "3")
                                 val planes = image.getPlanes()
-                                Log.d(TAG, "4")
                                 val imageBuffer = planes[0].getBuffer().rewind()
 
                                 // create bitmap
                                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                                 bitmap!!.copyPixelsFromBuffer(imageBuffer)
-                                Log.d(TAG, "5")
                                 // write bitmap to a file
 //                                fos = FileOutputStream("$filesDir/myscreen.png")
+
+
+                                val imgText = extractText(bitmap)
+                                Log.i(TAG, "Image text: \"$imgText\"")
+
+                                if (imgText != null && imgText.contains("Immerﬁ")) {
+                                    savedBitmap?.recycle()
+                                    savedBitmap = bitmap
+//                                    mImgView!!.setImageBitmap(savedBitmap)
+                                }
 
                                 /**
                                  * uncomment this if you want either PNG or JPEG output
@@ -166,7 +185,9 @@ class ScreenCaptureImageActivity : Activity() {
 
                             }
 
-                            bitmap?.recycle()
+                            if (savedBitmap != bitmap) {
+                                bitmap?.recycle()
+                            }
 
                             if (image != null)
                                 image.close()
@@ -176,6 +197,8 @@ class ScreenCaptureImageActivity : Activity() {
 
                 }, mHandler)
             }
+        } else if (requestCode == PERMISSION_REQUEST_CODE) {
+            prepareTesseract(true)
         }
 
         super.onActivityResult(requestCode, resultCode, data)
@@ -187,6 +210,13 @@ class ScreenCaptureImageActivity : Activity() {
 
     private fun stopProjection() {
         mHandler.post(Runnable { mProjection!!.stop() })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (savedBitmap != null) {
+            mImgView!!.setImageBitmap(savedBitmap)
+        }
     }
 
     private inner class VirtualDisplayCallback : VirtualDisplay.Callback() {
@@ -208,10 +238,131 @@ class ScreenCaptureImageActivity : Activity() {
 
     }
 
+    /**
+     * Prepare directory on external storage
+     *
+     * @param path
+     * @throws Exception
+     */
+    private fun prepareDirectory(path: String) {
+
+        val dir = File(path)
+        if (!dir.exists()) {
+            if (!dir.mkdirs()) {
+                Log.e(
+                    TAG,
+                    "ERROR: Creation of directory $path failed, check does Android Manifest have permission to write to external storage."
+                )
+            }
+        } else {
+            Log.i(TAG, "Created directory $path")
+        }
+    }
+
+
+    private fun prepareTesseract(requirePermission: Boolean) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+            PackageManager.PERMISSION_GRANTED) {
+            if (requirePermission) {
+                Log.e(TAG, "Could not get write permission")
+                return
+            }
+            requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), PERMISSION_REQUEST_CODE)
+            return
+        }
+
+        try {
+            prepareDirectory(DATA_PATH + TESSDATA)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        copyTessDataFiles(TESSDATA)
+    }
+
+    /**
+     * Copy tessdata files (located on assets/tessdata) to destination directory
+     *
+     * @param path - name of directory with .traineddata files
+     */
+    private fun copyTessDataFiles(path: String) {
+        try {
+            val fileList = assets.list(path)
+
+            for (fileName in fileList!!) {
+
+                // open file within the assets folder
+                // if it is not already there copy it to the sdcard
+                val pathToDataFile = DATA_PATH + path + "/" + fileName
+                if (!(File(pathToDataFile)).exists()) {
+
+                    val inp = assets.open(path + "/" + fileName)
+                    val out = FileOutputStream(pathToDataFile)
+
+                    // Transfer bytes from in to out
+                    val buf = ByteArray(1024)
+                    var len: Int
+
+                    len = inp.read(buf)
+                    while (len > 0) {
+                        out.write(buf, 0, len);
+                        len = inp.read(buf)
+                    }
+                    inp.close()
+                    out.close()
+
+                    Log.d(TAG, "Copied " + fileName + "to tessdata");
+                }
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "Unable to copy files to tessdata " + e.toString());
+        }
+    }
+
+    fun extractText(bitmap : Bitmap) : String? {
+        var tessBaseApi : TessBaseAPI? = null
+        try {
+            tessBaseApi = TessBaseAPI()
+        } catch (e: Exception) {
+            Log.e(TAG, e.message?: "")
+            if (tessBaseApi == null) {
+                Log.e(TAG, "TessBaseAPI is null. TessFactory not returning tess object.");
+            }
+            return null
+        }
+
+        tessBaseApi.init(DATA_PATH, lang);
+
+//       //EXTRA SETTINGS
+//        //For example if we only want to detect numbers
+//        tessBaseApi.setVariable(TessBaseAPI.VAR_CHAR_WHITELIST, "1234567890");
+//
+//        //blackList Example
+//        tessBaseApi.setVariable(TessBaseAPI.VAR_CHAR_BLACKLIST, "!@#$%^&*()_+=-qwertyuiop[]}{POIU" +
+//                "YTRWQasdASDfghFGHjklJKLl;L:'\"\\|~`xcvXCVbnmBNM,./<>?");
+
+        Log.d(TAG, "Training file loaded");
+        tessBaseApi.setImage(bitmap)
+        var extractedText : String? = null
+        try {
+            extractedText = tessBaseApi.getUTF8Text()
+        } catch (e : Exception) {
+            Log.e(TAG, "Error in recognizing text: ${e.message}")
+        }
+        tessBaseApi.end()
+        return extractedText;
+    }
+
     companion object {
 
         private val TAG = ScreenCaptureImageActivity::class.java.simpleName
         private val REQUEST_CODE = 100
+        private val PERMISSION_REQUEST_CODE = 101
+
+
+        private val lang = "eng"
+        private val DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/TesseractSample/";
+        private val TESSDATA = "tessdata"
     }
 
 }
