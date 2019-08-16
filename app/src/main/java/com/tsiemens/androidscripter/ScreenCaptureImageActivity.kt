@@ -137,19 +137,25 @@ class ScreenCaptureImageActivity : Activity() {
                             image = mImageReader!!.acquireLatestImage()
                             if (image != null) {
                                 val planes = image.getPlanes()
-                                val imageBuffer = planes[0].getBuffer().rewind()
+                                val imageBuffer = planes[0].buffer.rewind()
+
+                                // Strides in bytes (bytes/pixel)
+                                val pixStride = planes[0].pixelStride
+                                val rowStride = planes[0].rowStride
+                                val rowPaddingBytes = rowStride - (pixStride * width)
 
                                 // create bitmap
-                                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                                bitmap = Bitmap.createBitmap(
+                                    width + (rowPaddingBytes/pixStride), height, Bitmap.Config.ARGB_8888)
                                 bitmap!!.copyPixelsFromBuffer(imageBuffer)
+                                bitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height)
                                 // write bitmap to a file
 //                                fos = FileOutputStream("$filesDir/myscreen.png")
-
 
                                 val imgText = extractText(bitmap)
                                 Log.i(TAG, "Image text: \"$imgText\"")
 
-                                if (imgText != null && imgText.contains("Immerﬁ")) {
+                                if (imgText != null && (!imgText.contains("START"))) {
                                     savedBitmap?.recycle()
                                     savedBitmap = bitmap
 //                                    mImgView!!.setImageBitmap(savedBitmap)
