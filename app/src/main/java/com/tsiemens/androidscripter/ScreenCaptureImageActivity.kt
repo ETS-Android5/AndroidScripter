@@ -19,6 +19,8 @@ import android.media.ImageReader
 import android.os.Environment
 import android.os.Handler
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.Toolbar
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -29,7 +31,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 
-class ScreenCaptureImageActivity : Activity() {
+class ScreenCaptureImageActivity : AppCompatActivity() {
 
     private var mProjectionManager: MediaProjectionManager? = null
     private var mProjection: MediaProjection? = null
@@ -53,6 +55,9 @@ class ScreenCaptureImageActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_imgcap)
+
+        setSupportActionBar(findViewById<Toolbar>(R.id.toolbar))
+        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
         // call for the projection manager
         mProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -89,7 +94,12 @@ class ScreenCaptureImageActivity : Activity() {
         prepareTesseract(false)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "onActivityResult $requestCode")
         if (requestCode == REQUEST_CODE) {
             val curTime = System.currentTimeMillis()
@@ -240,6 +250,11 @@ class ScreenCaptureImageActivity : Activity() {
                 }
             })
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        overlayManager.destroy()
     }
 
     private inner class VirtualDisplayCallback : VirtualDisplay.Callback() {
