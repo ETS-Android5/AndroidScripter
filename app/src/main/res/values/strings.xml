@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">Android Scripter</string>
     <string name="action_settings">Settings</string>
+
+    <string-array name="overlay_displays">
+        <item>Screen Text</item>
+    </string-array>
 </resources>

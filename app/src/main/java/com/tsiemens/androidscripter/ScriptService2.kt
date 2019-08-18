@@ -104,10 +104,6 @@ class ScriptService2 : AccessibilityService() {
             }
             AccessibilityEvent.TYPE_VIEW_CLICKED ->
                 typeStr = "VIEW_CLICKED"
-            AccessibilityEvent.TYPE_TOUCH_INTERACTION_START ->
-                typeStr = "TOUCH_INTERACTION_START"
-            AccessibilityEvent.TYPE_TOUCH_INTERACTION_END ->
-                typeStr = "TOUCH_INTERACTION_END"
         }
 
         Log.d(TAG, "eventType: %x (%s), text: %s".format(event.eventType, typeStr, source))

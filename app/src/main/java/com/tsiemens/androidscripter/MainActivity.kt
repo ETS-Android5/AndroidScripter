@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity() {
             IntentFilter(ScriptService2.ACTION_FROM_SERVICE)
         )
         if (overlayManager.permittedToShow()) {
-            overlayManager.showOverlay()
+            // overlayManager.showOverlay()
         } else {
             overlayManager.launchOverlayPermissionsActivity()
         }

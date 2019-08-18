@@ -45,6 +45,11 @@ class ScreenCaptureImageActivity : Activity() {
 
     private var mImgView : ImageView? = null
 
+    private var lastImgText: String? = null
+
+    // Set here for testing only
+    val overlayManager = OverlayManager(this)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_imgcap)
@@ -153,13 +158,11 @@ class ScreenCaptureImageActivity : Activity() {
 //                                fos = FileOutputStream("$filesDir/myscreen.png")
 
                                 val imgText = extractText(bitmap)
+                                lastImgText = imgText
                                 Log.i(TAG, "Image text: \"$imgText\"")
 
-                                if (imgText != null && (!imgText.contains("START"))) {
-                                    savedBitmap?.recycle()
-                                    savedBitmap = bitmap
-//                                    mImgView!!.setImageBitmap(savedBitmap)
-                                }
+                                savedBitmap?.recycle()
+                                savedBitmap = bitmap
 
                                 /**
                                  * uncomment this if you want either PNG or JPEG output
@@ -220,8 +223,22 @@ class ScreenCaptureImageActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        if (savedBitmap != null) {
-            mImgView!!.setImageBitmap(savedBitmap)
+//        if (savedBitmap != null) {
+//            mImgView!!.setImageBitmap(savedBitmap)
+//        }
+
+        if (overlayManager.permittedToShow() && !overlayManager.started()) {
+            overlayManager.showOverlay()
+
+            overlayManager.setOnCaptureTextButtonClick(View.OnClickListener {
+                val imgText = lastImgText
+                if (imgText != null) {
+                    overlayManager.updateOcrText(imgText)
+                }
+                if (savedBitmap != null) {
+                    mImgView!!.setImageBitmap(savedBitmap!!.copy(savedBitmap!!.config, false))
+                }
+            })
         }
     }
 

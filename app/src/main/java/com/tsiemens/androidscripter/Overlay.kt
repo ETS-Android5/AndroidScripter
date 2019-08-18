@@ -11,6 +11,7 @@ import android.view.*
 import android.widget.TextView
 import android.view.MotionEvent
 import android.view.WindowManager
+import android.widget.Button
 
 // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
 class OverlayManager(val context: Context) {
@@ -28,8 +29,9 @@ class OverlayManager(val context: Context) {
         if (overlay != null) {
             return
         }
-        overlay = LayoutInflater.from(context).inflate(R.layout.overlay_base, null)
         Log.v(TAG, "showOverlay")
+        overlay = LayoutInflater.from(context).inflate(R.layout.overlay_base, null)
+        overlay!!.findViewById<View>(R.id.overlay_details).visibility = View.GONE
 
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -56,7 +58,15 @@ class OverlayManager(val context: Context) {
             }
         }
 
+        overlay!!.findViewById<Button>(R.id.overlay_ocr_clear_button).setOnClickListener {
+            updateOcrText("")
+        }
+
         handle.setOnTouchListener(ViewDragger(params!!, overlay!!, wm!!))
+    }
+
+    fun started(): Boolean {
+        return overlay != null
     }
 
     fun permittedToShow(): Boolean {
@@ -71,6 +81,17 @@ class OverlayManager(val context: Context) {
         if (overlay != null) {
             wm!!.removeView(overlay)
         }
+    }
+
+    fun updateOcrText(text: String) {
+        if (overlay != null) {
+            val ocrTv = overlay!!.findViewById<TextView>(R.id.screen_textview)
+            ocrTv.text = text
+        }
+    }
+
+    fun setOnCaptureTextButtonClick(cl: View.OnClickListener) {
+        overlay!!.findViewById<Button>(R.id.overlay_ocr_capture_button).setOnClickListener(cl)
     }
 }
 

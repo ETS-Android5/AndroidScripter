@@ -8,14 +8,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:background="#4BB5FF"
-            android:alpha="0.6">
-        <LinearLayout
+            android:background="#9BC4E6">
+        <android.support.constraint.ConstraintLayout
+                xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:padding="5dp"
-                android:background="#009DFF"
+                android:background="#6BC1F5"
                 tools:ignore="UselessParent">
 
             <TextView
@@ -23,6 +23,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.0"
                     android:textSize="13pt"
                     android:clickable="true"
                     android:focusable="true"
@@ -32,25 +37,65 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/overlay_expand"
+                    app:layout_constraintVertical_bias="0.5"
                     android:textSize="13pt"
                     android:textColor="#000000"
                     android:clickable="true"
                     android:focusable="true"
                     android:text="|||"/>
 
-        </LinearLayout>
+        </android.support.constraint.ConstraintLayout>
 
         <LinearLayout
                 android:id="@+id/overlay_details"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="gone">
-
-            <TextView
+                android:orientation="vertical"
+                android:visibility="visible"
+                android:padding="5dp">
+            <Spinner
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="50dp"
-                    android:text="STUFF"/>
+                    android:entries="@array/overlay_displays"/>
+
+            <LinearLayout
+                    android:id="@+id/overlay_ocr_panel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                    <Button
+                            android:id="@+id/overlay_ocr_capture_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Capture"
+                            android:textSize="5pt"/>
+                    <Button
+                            android:id="@+id/overlay_ocr_clear_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Clear"
+                            android:textSize="5pt"/>
+                </LinearLayout>
+                <ScrollView
+                        android:layout_width="wrap_content"
+                        android:layout_height="80dp">
+                    <TextView
+                            android:id="@+id/screen_textview"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="12dp"
+                            android:text="Stuff"/>
+
+                </ScrollView>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
