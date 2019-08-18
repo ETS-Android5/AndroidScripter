@@ -33,6 +33,8 @@ class MainActivity : AppCompatActivity() {
     val bcastReceiver : BroadcastReceiver? = MyReceiver()
     var projectionManager : MediaProjectionManager? = null
 
+    val overlayManager = OverlayManager(this)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -100,11 +102,21 @@ class MainActivity : AppCompatActivity() {
             bcastReceiver!!,
             IntentFilter(ScriptService2.ACTION_FROM_SERVICE)
         )
+        if (overlayManager.permittedToShow()) {
+            overlayManager.showOverlay()
+        } else {
+            overlayManager.launchOverlayPermissionsActivity()
+        }
     }
 
     override fun onPause() {
         super.onPause()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(bcastReceiver!!)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        overlayManager.destroy()
     }
 
     private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {

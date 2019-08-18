@@ -19,16 +19,8 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.support.v4.content.LocalBroadcastManager
 import android.util.DisplayMetrics
-import android.media.projection.MediaProjection
-import android.support.v4.content.ContextCompat.getSystemService
 import android.media.projection.MediaProjectionManager
 import android.media.MediaRecorder
-
-
-
-
-
-
 
 class NodeHandle(val node : AccessibilityNodeInfo) {
     var refCount = 1
@@ -112,6 +104,10 @@ class ScriptService2 : AccessibilityService() {
             }
             AccessibilityEvent.TYPE_VIEW_CLICKED ->
                 typeStr = "VIEW_CLICKED"
+            AccessibilityEvent.TYPE_TOUCH_INTERACTION_START ->
+                typeStr = "TOUCH_INTERACTION_START"
+            AccessibilityEvent.TYPE_TOUCH_INTERACTION_END ->
+                typeStr = "TOUCH_INTERACTION_END"
         }
 
         Log.d(TAG, "eventType: %x (%s), text: %s".format(event.eventType, typeStr, source))

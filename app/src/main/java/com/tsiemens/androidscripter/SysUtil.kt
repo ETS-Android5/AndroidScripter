@@ -49,11 +49,3 @@ fun tryGuaranteeUsageStatsAccess(ctx: Context) {
 fun launchAccessibilitySettings(ctx: Context) {
     ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
 }
-
-fun maybeLaunchOverlaySettings(ctx: Context) {
-    // TODO might want to see if I can get overlay working like so:
-    // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
-    if (!Settings.canDrawOverlays(ctx)) {
-        ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
-    }
-}
