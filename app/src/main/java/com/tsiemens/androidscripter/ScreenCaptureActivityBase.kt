@@ -17,15 +17,55 @@ import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.ImageView
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.write
 
-abstract class ScreenCaptureClient {
-    var requestPending = false
+class DisplayImage(val image: Image,
+                   val width: Int,
+                   val height: Int) {
 
-    abstract fun onScreenCap(bm: Bitmap)
+    private val refLock = ReentrantReadWriteLock()
+    private var ref = 1
 
-    open fun isRequestPending(): Boolean {
-        // By default, just use the flag
-        return requestPending
+    fun toBitmap(): Bitmap {
+        val planes = image.getPlanes()
+        val imageBuffer = planes[0].buffer.rewind()
+
+        // Strides in bytes (bytes/pixel)
+        val pixStride = planes[0].pixelStride
+        val rowStride = planes[0].rowStride
+        val rowPaddingBytes = rowStride - (pixStride * width)
+
+        // create bitmap
+        val bitmap = Bitmap.createBitmap(
+            width + (rowPaddingBytes/pixStride), height, Bitmap.Config.ARGB_8888)
+        bitmap!!.copyPixelsFromBuffer(imageBuffer)
+        // Trim off padding
+        return Bitmap.createBitmap(bitmap, 0, 0, width,  height)
+    }
+
+    fun close() {
+        image.close()
+    }
+
+    fun takeRef(): DisplayImage? {
+        refLock.write {
+            if (ref == 0) {
+                return null
+            }
+            ref++
+        }
+        return this
+    }
+
+    fun releaseRef() {
+        refLock.write {
+            ref--
+            if (ref == 0) {
+                Log.d("DisplayImage", "Closing image")
+                image.close()
+            }
+        }
     }
 }
 
@@ -36,13 +76,11 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     private var imageReader: ImageReader? = null
     private var looperHandler = Handler(Looper.getMainLooper())
 
-    private var imagesProduced: Int = 0
-
     // VirtualDisplay properties
     private var vDisplayHeight = 0
     private var vDisplayWidth = 0
 
-    private var client: ScreenCaptureClient? = null
+    private var lastImg: DisplayImage? = null
 
     companion object {
         private val TAG = ScreenCaptureActivityBase::class.java.simpleName
@@ -52,21 +90,43 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
         val MIN_REQUEST_CODE = 101
     }
 
+    abstract inner class ScreenCaptureClient {
+        var activity: ScreenCaptureActivityBase? = null
+        private var requestPending = false
+
+        protected abstract fun onScreenCap(bm: Bitmap)
+
+        open fun replyToReqeust(bm: Bitmap) {
+            requestPending = false
+            onScreenCap(bm)
+        }
+
+        open fun isRequestPending(): Boolean {
+            // By default, just use the flag
+            return requestPending
+        }
+
+        fun requestScreenCap() {
+            val lastImg = activity?.lastImg?.takeRef()
+            try {
+                if (lastImg != null) {
+                    replyToReqeust(lastImg.toBitmap())
+                } else {
+                    requestPending = true
+                }
+            } finally {
+                lastImg?.releaseRef()
+            }
+        }
+    }
+
+    private var client: ScreenCaptureClient? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // call for the projection manager
         projectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-
-//        mImgView = findViewById(R.id.bitmap_imgview) as ImageView
-
-        // start projection
-//        val startButton = findViewById<Button>(R.id.startButton)
-//        startButton.setOnClickListener { startProjection() }
-
-        // stop projection
-//        val stopButton = findViewById(R.id.stopButton) as Button
-//        stopButton.setOnClickListener { stopProjection() }
 
         // start capture handling thread
         object : Thread() {
@@ -81,10 +141,6 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "onActivityResult $requestCode")
         if (requestCode == SCREENCAP_REQUEST_CODE) {
-            // for statistics -- init
-            imagesProduced = 0
-            val startTimeInMillis = System.currentTimeMillis()
-
             projection = projectionManager!!.getMediaProjection(resultCode, data!!)
 
             if (projection != null) {
@@ -102,7 +158,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
                 // For some reason, the format is supposed to be 1, even though no constant in ImageFormat
                 // has this value. Unsure why at this point.
                 // Demo was using JPEG, but this caused a crash when getPlanes was called.
-                imageReader = ImageReader.newInstance(vDisplayWidth, vDisplayHeight, 1, 2)
+                imageReader = ImageReader.newInstance(vDisplayWidth, vDisplayHeight, 1, 3)
                 projection!!.createVirtualDisplay(
                     "screencap",
                     vDisplayWidth,
@@ -138,57 +194,30 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
         val image: Image? = imageReader!!.acquireLatestImage()
         try {
             val clientRef = client
-            if (clientRef?.isRequestPending() != true) {
-                return
-            }
-            val startTimeInMillis = System.currentTimeMillis()
 
-            Log.d(TAG, "onImageAvailable: serving request")
             if (image != null) {
-                val planes = image.getPlanes()
-                val imageBuffer = planes[0].buffer.rewind()
+                val displayImg = DisplayImage(image, vDisplayWidth, vDisplayHeight)
+                lastImg?.releaseRef()
+                lastImg = displayImg
 
-                // Strides in bytes (bytes/pixel)
-                val pixStride = planes[0].pixelStride
-                val rowStride = planes[0].rowStride
-                val rowPaddingBytes = rowStride - (pixStride * vDisplayWidth)
+                if (clientRef?.isRequestPending() == true) {
+                    Log.d(TAG, "onImageAvailable: serving request")
 
-                // create bitmap
-                var bitmap = Bitmap.createBitmap(
-                    vDisplayWidth + (rowPaddingBytes/pixStride), vDisplayHeight, Bitmap.Config.ARGB_8888)
-                bitmap!!.copyPixelsFromBuffer(imageBuffer)
-                // Trim off padding
-                bitmap = Bitmap.createBitmap(bitmap, 0, 0, vDisplayWidth, vDisplayHeight)
+                    // This is passed on, so don't recycle the bitmap
+                    clientRef.replyToReqeust(displayImg.toBitmap())
+                }
 
-//                val imgText = tessHelper.extractText(bitmap)
-//                lastImgText = imgText
-//                Log.i(TAG, "Image text: \"$imgText\"")
-
-                // This is passed on, so don't recycle the bitmap
-                clientRef.requestPending = false
-                clientRef.onScreenCap(bitmap)
-
-                val color = bitmap.getPixel(100, 100)
-                Log.d(TAG, "pixel at 100,100: (ARGB) ${Color.alpha(color)}, ${Color.red(color)}, ${Color.green(color)}, ${Color.blue(color)}")
-                // for statistics
-                imagesProduced++
-                val now = System.currentTimeMillis()
-                val sampleTime = now - startTimeInMillis
-                Log.e(
-                    TAG,
-                    "produced images at rate: " + imagesProduced / (sampleTime / 1000.0f) + " per sec"
-                )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, Log.getStackTraceString(e))
         } finally {
-            image?.close()
+//            image?.close()
         }
     }
 
     fun setScreenCaptureClient(client_: ScreenCaptureClient) {
         client = client_
+        client_.activity = this
     }
 
     private inner class VirtualDisplayCallback : VirtualDisplay.Callback() {

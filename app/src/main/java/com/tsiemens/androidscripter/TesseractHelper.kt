@@ -12,9 +12,10 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-
 class TesseractHelper(val activity: Activity, val permissionRequestCode: Int) {
-   var prepared = false
+    var prepared = false
+
+    var tessBaseApi : TessBaseAPI? = null
 
     companion object {
         private val TAG = TesseractHelper::class.java.simpleName
@@ -106,6 +107,16 @@ class TesseractHelper(val activity: Activity, val permissionRequestCode: Int) {
         }
 
         copyTessDataFiles(TESSDATA)
+
+        try {
+            tessBaseApi = TessBaseAPI()
+        } catch (e: Exception) {
+            Log.e(TAG, e.message?: "")
+            Log.e(TAG, "TessBaseAPI is null. TessFactory not returning tess object.")
+            return
+        }
+
+        tessBaseApi!!.init(DATA_PATH, lang)
         prepared = true
     }
 
@@ -114,19 +125,6 @@ class TesseractHelper(val activity: Activity, val permissionRequestCode: Int) {
             Log.e(TAG, "extractText: Not prepared yet")
             return null
         }
-
-        var tessBaseApi : TessBaseAPI? = null
-        try {
-            tessBaseApi = TessBaseAPI()
-        } catch (e: Exception) {
-            Log.e(TAG, e.message?: "")
-            if (tessBaseApi == null) {
-                Log.e(TAG, "TessBaseAPI is null. TessFactory not returning tess object.")
-            }
-            return null
-        }
-
-        tessBaseApi.init(DATA_PATH, lang)
 
 //       //EXTRA SETTINGS
 //        //For example if we only want to detect numbers
@@ -137,14 +135,15 @@ class TesseractHelper(val activity: Activity, val permissionRequestCode: Int) {
 //                "YTRWQasdASDfghFGHjklJKLl;L:'\"\\|~`xcvXCVbnmBNM,./<>?");
 
         Log.d(TAG, "Training file loaded");
-        tessBaseApi.setImage(bitmap)
+        tessBaseApi!!.setImage(bitmap)
         var extractedText : String? = null
         try {
-            extractedText = tessBaseApi.getUTF8Text()
+            extractedText = tessBaseApi!!.getUTF8Text()
         } catch (e : Exception) {
             Log.e(TAG, "Error in recognizing text: ${e.message}")
         }
-        tessBaseApi.end()
+        tessBaseApi!!.clear()
+//        tessBaseApi!!.end()
         return extractedText;
     }
 }

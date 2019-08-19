@@ -1,35 +1,16 @@
 package com.tsiemens.androidscripter
 
-import android.Manifest
-import android.hardware.display.VirtualDisplay
 import android.graphics.Bitmap
-import android.hardware.display.DisplayManager
 import android.content.Intent
 import android.os.Bundle
-import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.Point
-import android.media.Image
-import android.media.ImageReader
-import android.os.Environment
-import android.support.v4.content.ContextCompat
+import android.os.Looper
 import android.support.v7.widget.Toolbar
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
-import com.googlecode.tesseract.android.TessBaseAPI
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-
 
 class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
-    private var lastCapTs = 0L
-    private val minCapGap = 1000
-
-    private var savedBitmap : Bitmap? = null
-
     private var mImgView : ImageView? = null
 
     private var lastImgText: String? = null
@@ -69,12 +50,17 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
                     lastImgText = imgText
                     Log.i(TAG, "Image text: \"$imgText\"")
 
-                    runOnUiThread {
+                    val action = {
                         if (imgText != null) {
                             overlayManager.updateOcrText(imgText)
                         }
                         mImgView!!.setImageBitmap(bm)
-                        // TODO can recycle now?
+                    }
+
+                    if (Looper.myLooper() == Looper.getMainLooper()) {
+                       action()
+                    } else {
+                        runOnUiThread(action)
                     }
                 }
             }
@@ -100,17 +86,13 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
 
     override fun onResume() {
         super.onResume()
-//        if (savedBitmap != null) {
-//            mImgView!!.setImageBitmap(savedBitmap)
-//        }
-
         if (overlayManager.permittedToShow() && !overlayManager.started()) {
             overlayManager.showOverlay()
 
             overlayManager.setOnCaptureTextButtonClick(View.OnClickListener {
                 Log.i(TAG, "Capture in overlay pressed")
                 // The next image cap will return a response in the client
-                screenCapClient.requestPending = true
+                screenCapClient.requestScreenCap()
             })
         }
     }
