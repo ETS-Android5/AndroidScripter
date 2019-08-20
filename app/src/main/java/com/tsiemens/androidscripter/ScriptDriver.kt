@@ -16,5 +16,4 @@ class ScriptDriver(val ctx: Context) {
             Log.e(MainActivity.TAG, "$e")
         }
     }
-
 }

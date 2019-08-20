@@ -87,6 +87,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ScreenCaptureImageActivity::class.java))
         }
 
+        val scriptActivityBtn = findViewById<Button>(R.id.script_activity_button)
+        scriptActivityBtn.setOnClickListener {
+            startActivity(Intent(this, ScriptRunnerActivity::class.java))
+        }
+
         if (!isMyServiceRunning(ScriptService2::class.java)) {
             AccessibilitySettingDialogFragment().show(supportFragmentManager, "")
         }

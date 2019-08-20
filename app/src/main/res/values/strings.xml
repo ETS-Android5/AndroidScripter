@@ -5,4 +5,8 @@
     <string-array name="overlay_displays">
         <item>Screen Text</item>
     </string-array>
+
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="log">Log</string>
 </resources>
