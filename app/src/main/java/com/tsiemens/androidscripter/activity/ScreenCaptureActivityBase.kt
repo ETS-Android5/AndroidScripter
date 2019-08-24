@@ -1,4 +1,4 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.activity
 
 import android.hardware.display.VirtualDisplay
 import android.graphics.Bitmap
@@ -9,14 +9,12 @@ import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import android.media.projection.MediaProjection
 import android.content.Context
-import android.graphics.Color
 import android.graphics.Point
 import android.media.Image
 import android.media.ImageReader
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.widget.ImageView
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
@@ -179,7 +177,9 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
 
     fun startProjection() {
         Log.i(TAG, "startProjection")
-        startActivityForResult(projectionManager!!.createScreenCaptureIntent(), SCREENCAP_REQUEST_CODE)
+        startActivityForResult(projectionManager!!.createScreenCaptureIntent(),
+            SCREENCAP_REQUEST_CODE
+        )
     }
 
     fun stopProjection() {
@@ -196,7 +196,8 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
             val clientRef = client
 
             if (image != null) {
-                val displayImg = DisplayImage(image, vDisplayWidth, vDisplayHeight)
+                val displayImg =
+                    DisplayImage(image, vDisplayWidth, vDisplayHeight)
                 lastImg?.releaseRef()
                 lastImg = displayImg
 

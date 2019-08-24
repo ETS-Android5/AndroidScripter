@@ -1,4 +1,4 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -18,6 +18,7 @@ import android.widget.Button
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.media.projection.MediaProjectionManager
+import com.tsiemens.androidscripter.*
 
 private class MyReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

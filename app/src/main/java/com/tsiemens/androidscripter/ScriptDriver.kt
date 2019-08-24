@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.chaquo.python.PyException
 import com.chaquo.python.Python
+import com.tsiemens.androidscripter.activity.MainActivity
 
 class ScriptDriver(val ctx: Context) {
     fun runScript(scriptCode: String) {

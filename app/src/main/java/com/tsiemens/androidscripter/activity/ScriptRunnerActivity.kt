@@ -1,18 +1,18 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.activity
 
 import android.graphics.Bitmap
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
-import android.os.Looper
 import android.support.v7.widget.Toolbar
 import android.util.Log
 import android.view.View
 import android.widget.Button
-import android.widget.ImageView
 import android.widget.TextView
+import com.tsiemens.androidscripter.*
 
-class ScriptRunnerActivity : ScreenCaptureActivityBase(), ScriptApi.LogChangeListener {
+class ScriptRunnerActivity : ScreenCaptureActivityBase(),
+    ScriptApi.LogChangeListener {
     // Set here for testing only
     val overlayManager = OverlayManager(this)
 
@@ -30,7 +30,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(), ScriptApi.LogChangeLis
 
     companion object {
         private val TAG = ScriptRunnerActivity::class.java.simpleName
-        private val PREPARE_TESS_PERMISSION_REQUEST_CODE = MIN_REQUEST_CODE
+        private val PREPARE_TESS_PERMISSION_REQUEST_CODE =
+            MIN_REQUEST_CODE
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +71,10 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(), ScriptApi.LogChangeLis
             }
         setScreenCaptureClient(screenCapClient)
 
-        tessHelper = TesseractHelper(this, PREPARE_TESS_PERMISSION_REQUEST_CODE)
+        tessHelper = TesseractHelper(
+            this,
+            PREPARE_TESS_PERMISSION_REQUEST_CODE
+        )
         tessHelper.prepareTesseract(true)
     }
 

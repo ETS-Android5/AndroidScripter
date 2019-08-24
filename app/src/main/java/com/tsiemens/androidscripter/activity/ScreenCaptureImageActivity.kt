@@ -1,4 +1,4 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.activity
 
 import android.graphics.Bitmap
 import android.content.Intent
@@ -9,6 +9,9 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
+import com.tsiemens.androidscripter.OverlayManager
+import com.tsiemens.androidscripter.R
+import com.tsiemens.androidscripter.TesseractHelper
 
 class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
     private var mImgView : ImageView? = null
@@ -24,7 +27,8 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
 
     companion object {
         private val TAG = ScreenCaptureImageActivity::class.java.simpleName
-        private val PREPARE_TESS_PERMISSION_REQUEST_CODE = MIN_REQUEST_CODE
+        private val PREPARE_TESS_PERMISSION_REQUEST_CODE =
+            MIN_REQUEST_CODE
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,7 +70,10 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
             }
         setScreenCaptureClient(screenCapClient)
 
-        tessHelper = TesseractHelper(this, PREPARE_TESS_PERMISSION_REQUEST_CODE)
+        tessHelper = TesseractHelper(
+            this,
+            PREPARE_TESS_PERMISSION_REQUEST_CODE
+        )
         tessHelper.prepareTesseract(true)
     }
 
