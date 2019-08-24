@@ -12,6 +12,7 @@ import android.widget.TextView
 import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.Button
+import kotlin.math.max
 
 // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
 class OverlayManager(val context: Context) {
@@ -31,7 +32,7 @@ class OverlayManager(val context: Context) {
         }
         Log.v(TAG, "showOverlay")
         overlay = LayoutInflater.from(context).inflate(R.layout.overlay_base, null)
-        overlay!!.findViewById<View>(R.id.overlay_details).visibility = View.GONE
+        overlay!!.findViewById<View>(R.id.overlay_details_all).visibility = View.GONE
 
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -50,7 +51,7 @@ class OverlayManager(val context: Context) {
         val expander = overlay!!.findViewById<TextView>(R.id.overlay_expand)
         expander.setOnClickListener {
             if (overlay != null) {
-                val details = overlay!!.findViewById<View>(R.id.overlay_details)
+                val details = overlay!!.findViewById<View>(R.id.overlay_details_all)
                 details.visibility = when(details.visibility) {
                     View.VISIBLE -> View.GONE
                     else -> View.VISIBLE
@@ -63,6 +64,11 @@ class OverlayManager(val context: Context) {
         }
 
         handle.setOnTouchListener(ViewDragger(params!!, overlay!!, wm!!))
+
+        val sizeFrame = overlay!!.findViewById<View>(R.id.overlay_size_grower_frame)
+        val sizeRefView = overlay!!.findViewById<View>(R.id.overlay_details_and_grower)
+        val sizeHandle = overlay!!.findViewById<View>(R.id.overlay_sizing_handle)
+        sizeHandle.setOnTouchListener(ViewResizer(sizeFrame, sizeRefView, wm!!))
     }
 
     fun started(): Boolean {
@@ -122,8 +128,57 @@ class ViewDragger(val params: WindowManager.LayoutParams,
             MotionEvent.ACTION_MOVE -> {
                 params.x = xOnDown + (event.rawX - touchX).toInt()
                 params.y = yOnDown + (event.rawY - touchY).toInt()
-//                Log.d(TAG, "onTouch up. new x: ${params.x}, y: ${params.y}")
                 wm.updateViewLayout(view, params)
+                return true
+            }
+        }
+        return false
+    }
+}
+
+class ViewResizer(val targetView: View,
+                  val referenceView: View,
+                  val wm: WindowManager): View.OnTouchListener {
+    companion object {
+        val TAG = ViewResizer::class.java.simpleName
+    }
+    var widthOnDown: Int = 0
+    var heightOnDown: Int = 0
+    var touchX: Float = 0f
+    var touchY: Float = 0f
+
+    private fun correctTargetViewSize(): ViewGroup.LayoutParams {
+        val params = targetView.layoutParams
+        params.width = max(targetView.width, referenceView.width)
+        params.height = max(targetView.height, referenceView.height)
+//        Log.d(TAG, "correct to ${params.width}, ${params.height}")
+        targetView.layoutParams = params
+        return params
+    }
+
+    @SuppressWarnings("ClickableViewAccessibility")
+    override fun onTouch(v: View, event: MotionEvent): Boolean {
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                val params = correctTargetViewSize()
+                widthOnDown = params.width
+                heightOnDown = params.height
+                touchX = event.rawX
+                touchY = event.rawY
+//                Log.d(TAG, "DOWN $widthOnDown, $heightOnDown, $touchX, $touchY")
+                return true
+            }
+            MotionEvent.ACTION_UP -> {
+                correctTargetViewSize()
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+//                Log.d(TAG, "MOVE ${event.rawX}, ${event.rawY}")
+                val params = targetView.layoutParams
+                params.width = max(0, (widthOnDown + (event.rawX - touchX)).toInt())
+                params.height = max(0, (heightOnDown + (event.rawY - touchY)).toInt())
+//                Log.d(TAG, "MOVE change to ${params.width}, ${params.height}")
+                targetView.layoutParams = params
                 return true
             }
         }

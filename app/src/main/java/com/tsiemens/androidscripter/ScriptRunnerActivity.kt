@@ -13,8 +13,6 @@ import android.widget.ImageView
 import android.widget.TextView
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(), ScriptApi.LogChangeListener {
-    private var lastImgText: String? = null
-
     // Set here for testing only
     val overlayManager = OverlayManager(this)
 
@@ -131,6 +129,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(), ScriptApi.LogChangeLis
         script = null
     }
 
+    // From LogChangeListener
     override fun onLogChanged(newLog: ScriptApi.LogEntry) {
         Handler(mainLooper).post {
             logTv.append(newLog.toString() + "\n")

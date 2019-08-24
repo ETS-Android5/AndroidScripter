@@ -8,7 +8,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:background="#9BC4E6">
+            android:background="#9BC4E6"
+            tools:ignore="UselessParent">
         <android.support.constraint.ConstraintLayout
                 xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:layout_width="wrap_content"
@@ -50,52 +51,85 @@
 
         </android.support.constraint.ConstraintLayout>
 
-        <LinearLayout
-                android:id="@+id/overlay_details"
+        <RelativeLayout
+                android:id="@+id/overlay_details_all"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="visible"
-                android:padding="5dp">
-            <Spinner
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:entries="@array/overlay_displays"/>
+                android:layout_height="wrap_content">
 
-            <LinearLayout
-                    android:id="@+id/overlay_ocr_panel"
+            <RelativeLayout
+                    android:id="@+id/overlay_details_and_grower"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_height="wrap_content">
+
                 <LinearLayout
+                        android:id="@+id/overlay_details"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-                    <Button
-                            android:id="@+id/overlay_ocr_capture_button"
+                        android:orientation="vertical"
+                        android:visibility="visible"
+                        android:padding="5dp">
+                    <Spinner
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Capture"
-                            android:textSize="5pt"/>
-                    <Button
-                            android:id="@+id/overlay_ocr_clear_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Clear"
-                            android:textSize="5pt"/>
-                </LinearLayout>
-                <ScrollView
-                        android:layout_width="wrap_content"
-                        android:layout_height="80dp">
-                    <TextView
-                            android:id="@+id/screen_textview"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textSize="12dp"
-                            android:text="Stuff"/>
+                            android:entries="@array/overlay_displays"/>
 
-                </ScrollView>
-            </LinearLayout>
-        </LinearLayout>
+                    <LinearLayout
+                            android:id="@+id/overlay_ocr_panel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+                        <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                            <Button
+                                    android:id="@+id/overlay_ocr_capture_button"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Capture"
+                                    android:textSize="5pt"/>
+                            <Button
+                                    android:id="@+id/overlay_ocr_clear_button"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Clear"
+                                    android:textSize="5pt"/>
+                        </LinearLayout>
+
+                        <ScrollView
+                                android:layout_width="wrap_content"
+                                android:layout_height="80dp">
+                            <TextView
+                                    android:id="@+id/screen_textview"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textSize="12dp"
+                                    android:text="Stuff"/>
+
+                        </ScrollView>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <FrameLayout
+                        android:id="@+id/overlay_size_grower_frame"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"/>
+
+            </RelativeLayout>
+
+            <TextView
+                    android:id="@+id/overlay_sizing_handle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignEnd="@id/overlay_details_and_grower"
+                    android:layout_alignBottom="@id/overlay_details_and_grower"
+                    android:textSize="13pt"
+                    android:textColor="#000000"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="//"/>
+
+        </RelativeLayout>
+
     </LinearLayout>
 </FrameLayout>
