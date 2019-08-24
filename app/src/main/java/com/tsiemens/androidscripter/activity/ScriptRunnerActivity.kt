@@ -10,6 +10,8 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import com.tsiemens.androidscripter.*
+import android.view.KeyEvent
+
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     ScriptApi.LogChangeListener {
@@ -78,9 +80,24 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         tessHelper.prepareTesseract(true)
     }
 
+    override fun onBackPressed() {
+        Log.d(TAG, "onBackPressed")
+        super.onBackPressed()
+    }
+
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        Log.d(TAG, "onKeyDown: $keyCode")
+        //replaces the default 'Back' button action
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            onBackPressed()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -92,8 +109,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         super.onActivityResult(requestCode, resultCode, data)
     }
 
-    override fun onResume() {
-        super.onResume()
+    fun tryStartOverlay() {
         if (overlayManager.permittedToShow() && !overlayManager.started()) {
             overlayManager.showOverlay()
 
@@ -112,6 +128,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     fun onStartButton() {
         // startProjection()
+        tryStartOverlay()
 
         if (script == null) {
             val scriptCode = dataHelper.getAssetUtf8Data("example1.py")

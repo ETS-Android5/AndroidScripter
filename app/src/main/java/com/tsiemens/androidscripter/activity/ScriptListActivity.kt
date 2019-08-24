@@ -2,16 +2,15 @@ package com.tsiemens.androidscripter.activity
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuItem
-import android.view.ViewGroup
+import android.view.*
 import android.widget.TextView
 import com.tsiemens.androidscripter.R
+import com.tsiemens.androidscripter.storage.ScriptFile
+import com.tsiemens.androidscripter.storage.ScriptFileStorage
+import com.tsiemens.androidscripter.widget.RecyclerViewClickListener
 
 import kotlinx.android.synthetic.main.activity_script_list.*
 
@@ -19,23 +18,29 @@ class ScriptListActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
+    private lateinit var recyclerClickListener: RecyclerViewClickListener
 
-    private val myDataset = arrayListOf<String>()
+    private val scriptStorage = ScriptFileStorage(this)
+
+    private val scriptFiles = arrayListOf<ScriptFile>()
     private var nextNum = 1
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_script_list)
         setSupportActionBar(toolbar)
 
+        scriptFiles.addAll(scriptStorage.getScriptFiles())
+
         fab.setOnClickListener { view ->
-            myDataset.add("Entry " + nextNum.toString())
-            nextNum++
-            viewAdapter.notifyDataSetChanged()
+//            scriptFiles.add("Entry " + nextNum.toString())
+//            nextNum++
+//            viewAdapter.notifyDataSetChanged()
         }
 
         viewManager = LinearLayoutManager(this)
-        viewAdapter = MyAdapter(myDataset)
+        viewAdapter = ScriptFileAdapter(scriptFiles)
 
         recyclerView = findViewById<RecyclerView>(R.id.recycler_view).apply {
             // use this setting to improve performance if you know that changes
@@ -47,9 +52,22 @@ class ScriptListActivity : AppCompatActivity() {
 
             // specify an viewAdapter (see also next example)
             adapter = viewAdapter
+        }
+        recyclerClickListener = object: RecyclerViewClickListener(this, recyclerView) {
+            override fun onClick(view: View, position: Int) {
+                startActivity(Intent(this@ScriptListActivity,
+                    ScriptRunnerActivity::class.java))
+            }
 
+            override fun onLongClick(view: View, position: Int) {}
         }
 
+        recyclerView.addOnItemTouchListener(recyclerClickListener)
+    }
+
+    override fun onDestroy() {
+        recyclerView.removeOnItemTouchListener(recyclerClickListener)
+        super.onDestroy()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -73,8 +91,8 @@ class ScriptListActivity : AppCompatActivity() {
 
 }
 
-class MyAdapter(private val myDataset: List<String>) :
-    RecyclerView.Adapter<MyAdapter.MyViewHolder>() {
+class ScriptFileAdapter(private val myDataset: List<ScriptFile>) :
+    RecyclerView.Adapter<ScriptFileAdapter.MyViewHolder>() {
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -84,12 +102,22 @@ class MyAdapter(private val myDataset: List<String>) :
 
     // Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup,
-                                    viewType: Int): MyAdapter.MyViewHolder {
+                                    viewType: Int): ScriptFileAdapter.MyViewHolder {
         // create a new view
         val textView = LayoutInflater.from(parent.context)
             .inflate(android.R.layout.simple_list_item_1, parent, false) as TextView
         // set the view's size, margins, paddings and layout parameters
 
+        textView.isClickable = true
+        textView.isFocusable = true
+
+        // Apply the "wave" effect on click
+        val attrs = intArrayOf(android.R.attr.selectableItemBackground)
+        val typedArray = parent.context.obtainStyledAttributes(attrs)
+        val backgroundResource = typedArray.getResourceId(0, 0)
+        typedArray.recycle()
+        textView.foreground = parent.context.getDrawable(backgroundResource)
+        
         return MyViewHolder(textView)
     }
 
@@ -97,7 +125,7 @@ class MyAdapter(private val myDataset: List<String>) :
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        holder.textView.text = myDataset[position]
+        holder.textView.text = myDataset[position].name
     }
 
     // Return the size of your dataset (invoked by the layout manager)
