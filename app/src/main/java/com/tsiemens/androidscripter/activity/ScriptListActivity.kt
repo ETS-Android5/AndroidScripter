@@ -7,9 +7,13 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.*
 import android.widget.TextView
+import com.tsiemens.androidscripter.AccessibilitySettingDialogFragment
 import com.tsiemens.androidscripter.R
+import com.tsiemens.androidscripter.ScriptService2
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
+import com.tsiemens.androidscripter.service.isMyServiceRunning
 import com.tsiemens.androidscripter.storage.*
+import com.tsiemens.androidscripter.tryGuaranteeUsageStatsAccess
 import com.tsiemens.androidscripter.widget.RecyclerViewClickListener
 
 import kotlinx.android.synthetic.main.activity_script_list.*
@@ -62,6 +66,8 @@ class ScriptListActivity : AppCompatActivity() {
         }
 
         recyclerView.addOnItemTouchListener(recyclerClickListener)
+
+        tryGetPermissions()
     }
 
     override fun onDestroy() {
@@ -85,6 +91,14 @@ class ScriptListActivity : AppCompatActivity() {
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun tryGetPermissions() {
+        tryGuaranteeUsageStatsAccess(this)
+
+        if (!isMyServiceRunning(this, ScriptService2::class.java)) {
+            AccessibilitySettingDialogFragment().show(supportFragmentManager, "")
         }
     }
 

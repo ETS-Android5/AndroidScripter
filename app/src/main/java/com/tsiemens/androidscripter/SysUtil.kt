@@ -3,6 +3,7 @@ package com.tsiemens.androidscripter
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.provider.Settings
 import android.util.Log
@@ -42,7 +43,11 @@ fun getUsageStatsForegroundActivityName(ctx: Context): String? {
 
 fun tryGuaranteeUsageStatsAccess(ctx: Context) {
     if (getUsageStatsForegroundActivityName(ctx) == null) {
-        ctx.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        val dialog = OkNoDialogFragment()
+        dialog.setMessage("This app requires permission to access usage statistics. Allow?")
+        dialog.setOnOk( DialogInterface.OnClickListener { _, _ ->
+            ctx.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        })
     }
 }
 
