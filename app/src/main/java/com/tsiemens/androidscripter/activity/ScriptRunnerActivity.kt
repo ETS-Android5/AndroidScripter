@@ -11,7 +11,8 @@ import android.widget.Button
 import android.widget.TextView
 import com.tsiemens.androidscripter.*
 import android.view.KeyEvent
-
+import android.widget.Toast
+import com.tsiemens.androidscripter.storage.*
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     ScriptApi.LogChangeListener {
@@ -24,13 +25,20 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     val dataHelper = DataUtilHelper(this)
 
+    private val scriptStorage = ScriptFileStorage(this)
+    private lateinit var scriptFile: ScriptFile
+
     var scriptThread: Thread? = null
     var script: Script? = null
+    var scriptCode: String? = null
     var scriptApi = ScriptApi(this, this)
 
+    lateinit var scriptNameTv: TextView
     lateinit var logTv: TextView
 
     companion object {
+        val INTENT_EXTRA_SCRIPT_KEY = "script_key"
+
         private val TAG = ScriptRunnerActivity::class.java.simpleName
         private val PREPARE_TESS_PERMISSION_REQUEST_CODE =
             MIN_REQUEST_CODE
@@ -43,6 +51,14 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         setSupportActionBar(findViewById<Toolbar>(R.id.toolbar))
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
+        val keyStr = intent.getStringExtra(INTENT_EXTRA_SCRIPT_KEY)
+        require(keyStr != null) { "INTENT_EXTRA_SCRIPT_KEY must be set" }
+        val scriptKey = ScriptKey.fromString(keyStr)
+        scriptFile = scriptStorage.getScript(scriptKey)!!
+
+        scriptNameTv = findViewById(R.id.script_name_tv)
+        scriptNameTv.text = scriptFile.name
+
         logTv = findViewById(R.id.log_tv)
 
         val startButton = findViewById<Button>(R.id.start_button)
@@ -50,6 +66,24 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         val stopButton = findViewById<Button>(R.id.stop_button)
         stopButton.setOnClickListener { onStopButton() }
+
+        if (scriptKey.type == ScriptType.user) {
+            startButton.isEnabled = false
+
+            val reqTask = RequestTask()
+            reqTask.listener = object : RequestTask.OnResponseListener {
+                override fun onResponse(resp: String?) {
+                    if (resp != null) {
+                        scriptCode = resp
+                        startButton.isEnabled = true
+                    } else {
+                        Toast.makeText(this@ScriptRunnerActivity,
+                            "Error getting script", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            reqTask.execute((scriptFile as UserScriptFile).url)
+        }
 
         screenCapClient = object : ScreenCaptureClient() {
                 override fun onScreenCap(bm: Bitmap) {
@@ -115,9 +149,12 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         // startProjection()
         tryStartOverlay()
 
-        if (script == null) {
-            val scriptCode = dataHelper.getAssetUtf8Data("example1.py")
-            script = Script(this, "example1", scriptCode)
+        if (scriptCode == null && scriptFile.key.type == ScriptType.sample) {
+            scriptCode = dataHelper.getAssetUtf8Data((scriptFile as SampleScriptFile).filename)
+        }
+
+        if (script == null && scriptCode != null) {
+            script = Script(this, scriptFile.key.toString(), scriptCode!!)
 
             scriptThread = Thread(
                 Runnable {

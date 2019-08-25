@@ -5,15 +5,50 @@ import android.content.SharedPreferences
 import android.util.Log
 import org.json.JSONException
 import org.json.JSONObject
+import java.lang.IllegalArgumentException
+import java.lang.Long.max
 
-// TODO this should be id (which is generated, and implies the filename), URL, and name
-open class ScriptFile(var name: String)
+enum class ScriptType {
+    sample,
+    user;
 
-class SampleScriptFile(val filename: String, name: String): ScriptFile(name)
+    companion object {
+        fun fromString(str: String): ScriptType {
+            ScriptType.values().forEach {
+                if (it.toString() == str) {
+                    return it
+                }
+            }
+            throw IllegalArgumentException("$str is not a ScriptType")
+        }
+    }
+}
 
-class UserScriptFile(val id: Long,
+class ScriptKey(val type: ScriptType, val index: Long) {
+    override fun toString(): String {
+        return "${type}_$index"
+    }
+
+    companion object {
+        fun fromString(str: String): ScriptKey {
+            val parts = str.split("_")
+            require(parts.size == 2) { "Parts ${parts.size} != 2" }
+            val type = ScriptType.fromString(parts[0])
+            val index = parts[1].toLong()
+
+            return ScriptKey(type, index)
+        }
+    }
+}
+
+open class ScriptFile(val key: ScriptKey, var name: String)
+
+class SampleScriptFile(index: Long, val filename: String, name: String):
+    ScriptFile(ScriptKey(ScriptType.sample, index), name)
+
+class UserScriptFile(index: Long,
                      name: String,
-                     var url: String): ScriptFile(name)
+                     var url: String): ScriptFile(ScriptKey(ScriptType.user, index), name)
 
 class ScriptFileStorage(val context: Context) {
     companion object {
@@ -30,8 +65,18 @@ class ScriptFileStorage(val context: Context) {
         }
     }
 
+    private fun getSampleScriptFilesMap(): MutableMap<Long, SampleScriptFile> {
+        val map = hashMapOf<Long, SampleScriptFile>()
+        map[1L] = SampleScriptFile(1L, "example1.py", "Example 1")
+        return map
+    }
+
     private fun getSampleScriptFiles(): List<ScriptFile> {
-        return arrayListOf(SampleScriptFile("example1.py", "Example 1"))
+        val scripts = arrayListOf<ScriptFile>()
+        getSampleScriptFilesMap().values.forEach {
+            scripts.add(it)
+        }
+        return scripts
     }
 
     private fun prefs(): SharedPreferences {
@@ -50,7 +95,7 @@ class ScriptFileStorage(val context: Context) {
                     val scriptFile = UserScriptFile(id.toLong(),
                         scriptJsonObj.getString(ScriptJson.NAME),
                         scriptJsonObj.getString(ScriptJson.URL))
-                    scripts[scriptFile.id] = (scriptFile)
+                    scripts[scriptFile.key.index] = (scriptFile)
                 }
             } catch (e: JSONException) {
                 Log.e(TAG, e.message)
@@ -66,7 +111,7 @@ class ScriptFileStorage(val context: Context) {
             val scriptJsonObj = JSONObject()
             scriptJsonObj.put(ScriptJson.NAME, scriptFile.name)
             scriptJsonObj.put(ScriptJson.URL, scriptFile.url)
-            scriptsJsonObj.put(scriptFile.id.toString(), scriptJsonObj)
+            scriptsJsonObj.put(scriptFile.key.index.toString(), scriptJsonObj)
         }
 
         prefs().edit().putString(SCRIPT_ENTRIES_JSON, scriptsJsonObj.toString()).apply()
@@ -86,8 +131,25 @@ class ScriptFileStorage(val context: Context) {
 
     fun addScriptFile(script: UserScriptFile) {
         val userScripts = getUserScriptFilesMap()
-        userScripts[script.id] = script
+        userScripts[script.key.index] = script
         putUserScriptFilesMap(userScripts)
+    }
+
+    fun nextAvailableIndex(type: ScriptType, scripts: Collection<ScriptFile>): Long {
+        var highestIndex = 0L
+        scripts.forEach {
+            if (it.key.type == type) {
+                highestIndex = max(highestIndex, it.key.index)
+            }
+        }
+        return highestIndex + 1
+    }
+
+    fun getScript(key: ScriptKey): ScriptFile? {
+        return when (key.type) {
+            ScriptType.sample -> getSampleScriptFilesMap()[key.index]
+            ScriptType.user -> getUserScriptFilesMap()[key.index]
+        }
     }
 }
 

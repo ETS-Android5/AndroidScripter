@@ -9,9 +9,7 @@ import android.view.*
 import android.widget.TextView
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
-import com.tsiemens.androidscripter.storage.ScriptFile
-import com.tsiemens.androidscripter.storage.ScriptFileStorage
-import com.tsiemens.androidscripter.storage.UserScriptFile
+import com.tsiemens.androidscripter.storage.*
 import com.tsiemens.androidscripter.widget.RecyclerViewClickListener
 
 import kotlinx.android.synthetic.main.activity_script_list.*
@@ -56,8 +54,8 @@ class ScriptListActivity : AppCompatActivity() {
         }
         recyclerClickListener = object: RecyclerViewClickListener(this, recyclerView) {
             override fun onClick(view: View, position: Int) {
-                startActivity(Intent(this@ScriptListActivity,
-                    ScriptRunnerActivity::class.java))
+                val scriptFile = scriptFiles[position]
+                startScriptActivity(scriptFile.key)
             }
 
             override fun onLongClick(view: View, position: Int) {}
@@ -90,13 +88,24 @@ class ScriptListActivity : AppCompatActivity() {
         }
     }
 
+    private fun startScriptActivity(key: ScriptKey) {
+        val intent = Intent(this@ScriptListActivity,
+                ScriptRunnerActivity::class.java)
+        intent.putExtra(ScriptRunnerActivity.INTENT_EXTRA_SCRIPT_KEY, key.toString())
+        startActivity(intent)
+    }
+
     private fun createNewScript() {
         val createDialog = ScriptEditDialog()
         createDialog.onOkListener = object : ScriptEditDialog.OnOkListener {
             override fun onOk(name: String, url: String) {
-                val script = UserScriptFile(0, name, url)
+                val nextIndex = scriptStorage.nextAvailableIndex(ScriptType.user, scriptFiles)
+                val script = UserScriptFile(nextIndex, name, url)
                 scriptFiles.add(script)
                 viewAdapter.notifyDataSetChanged()
+
+                scriptStorage.addScriptFile(script)
+                startScriptActivity(script.key)
             }
         }
         createDialog.show(supportFragmentManager, "Create script dialog")
