@@ -21,11 +21,14 @@ class Script(context: Context, modName: String, scriptCode: String) {
             val pyApiMod = Python.getInstance().getModule("androidscripter.api")
             val pyApi = pyApiMod.callAttr("newApiFromApi", api)
             module.callAttr("run", pyApi)
+            api.logInternal("SCRIPT EXITED")
         } catch (e: PyException) {
             if (e.cause?.javaClass == InterruptedException::class.java) {
                 Log.e(TAG, "Script interrupted")
+                api.logInternal("SCRIPT INTERRUPTED")
             } else {
                 Log.e(TAG, e.message)
+                api.logInternal("SCRIPT EXCEPTION: ${e.message}")
             }
         }
     }

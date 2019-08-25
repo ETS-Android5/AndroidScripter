@@ -48,6 +48,8 @@ class NodeHandle(val node : AccessibilityNodeInfo) {
     }
 }
 
+class WindowState(val pkg: String?, val activity: String?)
+
 class ScriptService2 : AccessibilityService() {
 //    var lastNode : NodeHandle? = null
 //    var lastWindowStateNode : NodeHandle? = null
@@ -56,10 +58,9 @@ class ScriptService2 : AccessibilityService() {
 
         val ACTION_TO_SERVICE = "com.tsiemens.androidscripter.LBcastToScriptService"
         val ACTION_FROM_SERVICE = "com.tsiemens.androidscripter.LBcastFromScriptService"
-    }
 
-    var currWindowPackage : String? = null
-    var currWindowActivity : String? = null
+        var currWindowState: WindowState? = null
+    }
 
     private class ServiceBcastReceiver(val service: ScriptService2) : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -96,8 +97,10 @@ class ScriptService2 : AccessibilityService() {
         when(event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 typeStr = "WINDOW_STATE_CHANGED"
-                currWindowPackage = event.packageName?.toString()
-                currWindowActivity = event.className?.toString()
+                currWindowState = WindowState(
+                    event.packageName?.toString(),
+                    event.className?.toString()
+                )
 //                lastWindowStateNode?.dec()
 //                lastWindowStateNode = lastNode
 //                lastNode?.inc()

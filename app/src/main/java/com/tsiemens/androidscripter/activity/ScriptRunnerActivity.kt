@@ -15,6 +15,13 @@ import android.view.MenuItem
 import android.widget.Toast
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.storage.*
+import android.text.method.ScrollingMovementMethod
+import android.support.v4.app.SupportActivity
+import android.support.v4.app.SupportActivity.ExtraData
+import android.support.v4.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.widget.ScrollView
+
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     ScriptApi.LogChangeListener {
@@ -36,7 +43,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     var scriptApi = ScriptApi(this, this)
 
     lateinit var scriptNameTv: TextView
+    lateinit var logScrollView: ScrollView
     lateinit var logTv: TextView
+    lateinit var startButton: Button
 
     companion object {
         val INTENT_EXTRA_SCRIPT_KEY = "script_key"
@@ -60,9 +69,14 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         updateScriptDetailsViews()
 
+        logScrollView = findViewById(R.id.log_scrollview)
+        logScrollView.addOnLayoutChangeListener {
+                view: View, i: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int ->
+            scrollLogToBottom()
+        }
         logTv = findViewById(R.id.log_tv)
 
-        val startButton = findViewById<Button>(R.id.start_button)
+        startButton = findViewById<Button>(R.id.start_button)
         startButton.setOnClickListener { onStartButton() }
 
         val stopButton = findViewById<Button>(R.id.stop_button)
@@ -70,20 +84,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         if (scriptKey.type == ScriptType.user) {
             startButton.isEnabled = false
-
-            val reqTask = RequestTask()
-            reqTask.listener = object : RequestTask.OnResponseListener {
-                override fun onResponse(resp: String?) {
-                    if (resp != null) {
-                        scriptCode = resp
-                        startButton.isEnabled = true
-                    } else {
-                        Toast.makeText(this@ScriptRunnerActivity,
-                            "Error getting script", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-            reqTask.execute((scriptFile as UserScriptFile).url)
+            loadUserScript()
         }
 
         screenCapClient = object : ScreenCaptureClient() {
@@ -118,6 +119,25 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     private fun updateScriptDetailsViews() {
         scriptNameTv = findViewById(R.id.script_name_tv)
         scriptNameTv.text = scriptFile.name
+    }
+
+    private fun loadUserScript() {
+        val reqTask = RequestTask()
+        reqTask.listener = object : RequestTask.OnResponseListener {
+            override fun onResponse(resp: String?) {
+                if (resp != null) {
+                    scriptCode = resp
+                    script = null
+                    startButton.isEnabled = true
+                    Toast.makeText(this@ScriptRunnerActivity,
+                        "Script loaded", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@ScriptRunnerActivity,
+                        "Error getting script", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        reqTask.execute((scriptFile as UserScriptFile).url)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -167,6 +187,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         return when (item.itemId) {
             R.id.action_edit -> { doEditScriptDetails(); true }
             R.id.action_refresh -> {
+                if (scriptFile.key.type == ScriptType.user) {
+                    loadUserScript()
+                }
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -220,11 +243,19 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         script = null
     }
 
+    private fun scrollLogToBottom() {
+        logScrollView.apply {
+            val lastChild = getChildAt(childCount - 1)
+            val bottom = lastChild.bottom + paddingBottom
+            val delta = bottom - (scrollY+ height)
+            smoothScrollBy(0, delta)
+        }
+    }
+
     // From LogChangeListener
     override fun onLogChanged(newLog: ScriptApi.LogEntry) {
         Handler(mainLooper).post {
             logTv.append(newLog.toString() + "\n")
-            // TODO scroll to bottom if already at bottom
         }
     }
 }

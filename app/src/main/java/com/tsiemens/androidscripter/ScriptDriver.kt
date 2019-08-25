@@ -6,6 +6,7 @@ import com.chaquo.python.PyException
 import com.chaquo.python.Python
 import com.tsiemens.androidscripter.activity.MainActivity
 
+@Deprecated("Use Script.run instead")
 class ScriptDriver(val ctx: Context) {
     fun runScript(scriptCode: String) {
         try {

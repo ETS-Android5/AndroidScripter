@@ -15,6 +15,9 @@ class Api:
     def foreground_activity_package(self):
         return self._api.foregroundActivityPackage()
 
+    def foreground_window_state(self):
+        return self._api.foregroundWindowState()
+
 def newApi(android_context):
     return Api(android_context)
 
