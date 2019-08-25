@@ -16,6 +16,13 @@ class ScriptEditDialog: DialogFragment() {
     private lateinit var dialogView: View
 
     var onOkListener: OnOkListener? = null
+    private var initialName: String = ""
+    private var initialUrl: String = ""
+
+    fun setInitialVals(name: String, url: String) {
+        initialName = name
+        initialUrl = url
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return activity?.let { fragActivity ->
@@ -26,6 +33,9 @@ class ScriptEditDialog: DialogFragment() {
             // Inflate and set the layout for the dialog
             // Pass null as the parent view because its going in the dialog layout
             dialogView = inflater.inflate(R.layout.dialog_script_edit, null)
+            dialogView.findViewById<EditText>(R.id.name_et).setText(initialName)
+            dialogView.findViewById<EditText>(R.id.url_et).setText(initialUrl)
+
             builder.setView(dialogView)
                 // Positive click listener is set onStart to override the dismiss behaviour
                 .setPositiveButton(android.R.string.ok, null)
@@ -41,7 +51,7 @@ class ScriptEditDialog: DialogFragment() {
         d.getButton(Dialog.BUTTON_POSITIVE).setOnClickListener { doOk() }
     }
 
-    fun doOk() {
+    private fun doOk() {
         val nameEt = dialogView.findViewById<EditText>(R.id.name_et)
         val urlEt = dialogView.findViewById<EditText>(R.id.url_et)
 

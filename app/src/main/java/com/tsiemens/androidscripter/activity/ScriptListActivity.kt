@@ -20,20 +20,18 @@ import kotlinx.android.synthetic.main.activity_script_list.*
 
 class ScriptListActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
-    private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
     private lateinit var recyclerClickListener: RecyclerViewClickListener
 
     private val scriptStorage = ScriptFileStorage(this)
 
     private val scriptFiles = arrayListOf<ScriptFile>()
+    private val viewAdapter = ScriptFileAdapter(scriptFiles)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_script_list)
         setSupportActionBar(toolbar)
-
-        scriptFiles.addAll(scriptStorage.getScriptFiles())
 
         fab.setOnClickListener { view ->
 //            scriptFiles.add("Entry " + nextNum.toString())
@@ -42,8 +40,9 @@ class ScriptListActivity : AppCompatActivity() {
             createNewScript()
         }
 
+        updateScriptAdapter()
+
         viewManager = LinearLayoutManager(this)
-        viewAdapter = ScriptFileAdapter(scriptFiles)
 
         recyclerView = findViewById<RecyclerView>(R.id.recycler_view).apply {
             // use this setting to improve performance if you know that changes
@@ -75,6 +74,11 @@ class ScriptListActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateScriptAdapter()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
@@ -92,6 +96,12 @@ class ScriptListActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun updateScriptAdapter() {
+        scriptFiles.clear()
+        scriptFiles.addAll(scriptStorage.getScriptFiles())
+        viewAdapter.notifyDataSetChanged()
     }
 
     private fun tryGetPermissions() {
@@ -118,7 +128,7 @@ class ScriptListActivity : AppCompatActivity() {
                 scriptFiles.add(script)
                 viewAdapter.notifyDataSetChanged()
 
-                scriptStorage.addScriptFile(script)
+                scriptStorage.putUserScriptFile(script)
                 startScriptActivity(script.key)
             }
         }

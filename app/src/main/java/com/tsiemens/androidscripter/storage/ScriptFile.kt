@@ -129,7 +129,7 @@ class ScriptFileStorage(val context: Context) {
         return getSampleScriptFiles() + getUserScriptFiles()
     }
 
-    fun addScriptFile(script: UserScriptFile) {
+    fun putUserScriptFile(script: UserScriptFile) {
         val userScripts = getUserScriptFilesMap()
         userScripts[script.key.index] = script
         putUserScriptFilesMap(userScripts)

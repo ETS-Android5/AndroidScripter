@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.provider.Settings
+import android.support.v4.app.FragmentActivity
 import android.util.Log
 import java.util.*
 
@@ -41,13 +42,14 @@ fun getUsageStatsForegroundActivityName(ctx: Context): String? {
     return topActivity
 }
 
-fun tryGuaranteeUsageStatsAccess(ctx: Context) {
+fun tryGuaranteeUsageStatsAccess(ctx: FragmentActivity) {
     if (getUsageStatsForegroundActivityName(ctx) == null) {
         val dialog = OkNoDialogFragment()
         dialog.setMessage("This app requires permission to access usage statistics. Allow?")
         dialog.setOnOk( DialogInterface.OnClickListener { _, _ ->
             ctx.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         })
+        dialog.show(ctx.supportFragmentManager, "Usage stats perms dialog")
     }
 }
 

@@ -10,8 +10,10 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import com.tsiemens.androidscripter.*
-import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
+import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.storage.*
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
@@ -56,8 +58,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         val scriptKey = ScriptKey.fromString(keyStr)
         scriptFile = scriptStorage.getScript(scriptKey)!!
 
-        scriptNameTv = findViewById(R.id.script_name_tv)
-        scriptNameTv.text = scriptFile.name
+        updateScriptDetailsViews()
 
         logTv = findViewById(R.id.log_tv)
 
@@ -114,6 +115,11 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         tessHelper.prepareTesseract(true)
     }
 
+    private fun updateScriptDetailsViews() {
+        scriptNameTv = findViewById(R.id.script_name_tv)
+        scriptNameTv.text = scriptFile.name
+    }
+
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
@@ -143,6 +149,48 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     override fun onDestroy() {
         super.onDestroy()
         overlayManager.destroy()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.script_runner_menu, menu)
+        if (scriptFile.key.type == ScriptType.sample) {
+            menu.findItem(R.id.action_edit).isEnabled = false
+            menu.findItem(R.id.action_refresh).isEnabled = false
+        }
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        return when (item.itemId) {
+            R.id.action_edit -> { doEditScriptDetails(); true }
+            R.id.action_refresh -> {
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    fun doEditScriptDetails() {
+        if (scriptFile.key.type != ScriptType.user) {
+            return
+        }
+        val userScript = scriptFile as UserScriptFile
+
+        val dialog = ScriptEditDialog()
+        dialog.setInitialVals(userScript.name, userScript.url)
+
+        dialog.onOkListener = object : ScriptEditDialog.OnOkListener {
+            override fun onOk(name: String, url: String) {
+                userScript.name = name
+                userScript.url = url
+                scriptStorage.putUserScriptFile(userScript)
+                updateScriptDetailsViews()
+            }
+        }
+        dialog.show(supportFragmentManager, "Edit script dialog")
     }
 
     fun onStartButton() {
