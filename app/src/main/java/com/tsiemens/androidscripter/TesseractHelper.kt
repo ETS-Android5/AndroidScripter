@@ -8,6 +8,7 @@ import android.os.Environment
 import android.support.v4.content.ContextCompat
 import android.util.Log
 import com.googlecode.tesseract.android.TessBaseAPI
+import com.tsiemens.androidscripter.storage.StorageUtil
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -65,15 +66,7 @@ class TesseractHelper(val activity: Activity, val permissionRequestCode: Int) {
                     val inp = activity.assets.open(path + "/" + fileName)
                     val out = FileOutputStream(pathToDataFile)
 
-                    // Transfer bytes from in to out
-                    val buf = ByteArray(1024)
-                    var len: Int
-
-                    len = inp.read(buf)
-                    while (len > 0) {
-                        out.write(buf, 0, len);
-                        len = inp.read(buf)
-                    }
+                    StorageUtil.copyInToOut(inp, out)
                     inp.close()
                     out.close()
 

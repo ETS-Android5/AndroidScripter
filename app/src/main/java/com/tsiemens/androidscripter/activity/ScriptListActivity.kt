@@ -8,8 +8,10 @@ import android.support.v7.widget.RecyclerView
 import android.view.*
 import android.widget.TextView
 import com.tsiemens.androidscripter.R
+import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.storage.ScriptFile
 import com.tsiemens.androidscripter.storage.ScriptFileStorage
+import com.tsiemens.androidscripter.storage.UserScriptFile
 import com.tsiemens.androidscripter.widget.RecyclerViewClickListener
 
 import kotlinx.android.synthetic.main.activity_script_list.*
@@ -23,8 +25,6 @@ class ScriptListActivity : AppCompatActivity() {
     private val scriptStorage = ScriptFileStorage(this)
 
     private val scriptFiles = arrayListOf<ScriptFile>()
-    private var nextNum = 1
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +37,7 @@ class ScriptListActivity : AppCompatActivity() {
 //            scriptFiles.add("Entry " + nextNum.toString())
 //            nextNum++
 //            viewAdapter.notifyDataSetChanged()
+            createNewScript()
         }
 
         viewManager = LinearLayoutManager(this)
@@ -89,6 +90,17 @@ class ScriptListActivity : AppCompatActivity() {
         }
     }
 
+    private fun createNewScript() {
+        val createDialog = ScriptEditDialog()
+        createDialog.onOkListener = object : ScriptEditDialog.OnOkListener {
+            override fun onOk(name: String, url: String) {
+                val script = UserScriptFile(0, name, url)
+                scriptFiles.add(script)
+                viewAdapter.notifyDataSetChanged()
+            }
+        }
+        createDialog.show(supportFragmentManager, "Create script dialog")
+    }
 }
 
 class ScriptFileAdapter(private val myDataset: List<ScriptFile>) :
@@ -117,7 +129,7 @@ class ScriptFileAdapter(private val myDataset: List<ScriptFile>) :
         val backgroundResource = typedArray.getResourceId(0, 0)
         typedArray.recycle()
         textView.foreground = parent.context.getDrawable(backgroundResource)
-        
+
         return MyViewHolder(textView)
     }
 

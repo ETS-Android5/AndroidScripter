@@ -80,24 +80,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         tessHelper.prepareTesseract(true)
     }
 
-    override fun onBackPressed() {
-        Log.d(TAG, "onBackPressed")
-        super.onBackPressed()
-    }
-
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        Log.d(TAG, "onKeyDown: $keyCode")
-        //replaces the default 'Back' button action
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            onBackPressed()
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
