@@ -4,9 +4,9 @@ Allows scripts written in python to automate various actions on your Android dev
 Current API includes:
 - Checking for the currently visible application
 - Performing clicks and buttons presses
+- Getting screen captures
 
 Planned API features:
-- Getting screen captures
 - Text recognition service for screen captures
 - TBD
 
