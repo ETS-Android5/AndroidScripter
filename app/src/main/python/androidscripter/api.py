@@ -13,6 +13,9 @@ class Api:
     def foreground_window_state(self):
         return self._api.foregroundWindowState()
 
+    def get_screencap(self):
+        return self._api.getScreenCap()
+
     def send_click(self, x, y, is_percent=False):
         return self._api.sendClick(x, y, is_percent)
 

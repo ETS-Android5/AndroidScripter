@@ -1,6 +1,7 @@
 package com.tsiemens.androidscripter
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
 import com.tsiemens.androidscripter.service.ScriptService2
 import com.tsiemens.androidscripter.service.ServiceBcastClient
@@ -15,7 +16,9 @@ import kotlin.concurrent.write
 class ScriptUtilException(msg: String): RuntimeException(msg)
 
 @Suppress("UNUSED")
-class ScriptApi(val ctx: Context, val logChangeListener: LogChangeListener?) {
+class ScriptApi(val ctx: Context,
+                val logChangeListener: LogChangeListener?,
+                val screenProvider: ScreenProvider?) {
     val logLock = ReentrantReadWriteLock()
     val interrupted = AtomicBoolean(false)
 
@@ -51,6 +54,10 @@ class ScriptApi(val ctx: Context, val logChangeListener: LogChangeListener?) {
         fun onLogChanged(newLog: LogEntry)
     }
 
+    interface ScreenProvider {
+        fun getScreenCap(): Bitmap?
+    }
+
     private fun maybeEndThread() {
         if (Thread.currentThread().isInterrupted) {
             Log.i(TAG, "Interrupting thread")
@@ -67,6 +74,10 @@ class ScriptApi(val ctx: Context, val logChangeListener: LogChangeListener?) {
     fun foregroundWindowState(): WindowState? {
         maybeEndThread()
         return ScriptService2.currWindowState
+    }
+
+    fun getScreenCap(): Bitmap? {
+        return screenProvider?.getScreenCap()
     }
 
     fun sendClick(x: Float, y: Float, isPercent: Boolean = false) {

@@ -15,16 +15,14 @@ import android.view.MenuItem
 import android.widget.Toast
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.storage.*
-import android.text.method.ScrollingMovementMethod
-import android.support.v4.app.SupportActivity
-import android.support.v4.app.SupportActivity.ExtraData
-import android.support.v4.content.ContextCompat.getSystemService
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import android.widget.ScrollView
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.locks.ReentrantLock
 
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
-    ScriptApi.LogChangeListener {
+    ScriptApi.LogChangeListener, ScriptApi.ScreenProvider {
+
     // Set here for testing only
     val overlayManager = OverlayManager(this)
 
@@ -40,12 +38,16 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     var scriptThread: Thread? = null
     var script: Script? = null
     var scriptCode: String? = null
-    var scriptApi = ScriptApi(this, this)
+    var scriptApi = ScriptApi(this, this, this)
 
     lateinit var scriptNameTv: TextView
     lateinit var logScrollView: ScrollView
     lateinit var logTv: TextView
     lateinit var startButton: Button
+
+    var lastScreencap: Bitmap? = null
+    val screenCapLatchLock = ReentrantLock()
+    var screenCapLatch: CountDownLatch? = null
 
     companion object {
         val INTENT_EXTRA_SCRIPT_KEY = "script_key"
@@ -89,6 +91,13 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         screenCapClient = object : ScreenCaptureClient() {
                 override fun onScreenCap(bm: Bitmap) {
+                    Log.d(TAG, "onScreenCap: $bm")
+                    lastScreencap = bm
+
+                    screenCapLatchLock.lock()
+                    screenCapLatch?.countDown()
+                    screenCapLatchLock.unlock()
+
 //                    val imgText = tessHelper.extractText(bm)
 //                    lastImgText = imgText
 //                    Log.i(TAG, "Image text: \"$imgText\"")
@@ -217,7 +226,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     }
 
     fun onStartButton() {
-        // startProjection()
+        startProjection()
         tryStartOverlay()
 
         if (scriptCode == null && scriptFile.key.type == ScriptType.sample) {
@@ -236,7 +245,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     }
 
     fun onStopButton() {
-        // stopProjection()
+        stopProjection()
 
         scriptThread?.interrupt()
         scriptThread = null
@@ -257,5 +266,24 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         Handler(mainLooper).post {
             logTv.append(newLog.toString() + "\n")
         }
+    }
+
+    // NOTE this method will block the thread.
+    override fun getScreenCap(): Bitmap? {
+        screenCapLatchLock.lock()
+        screenCapLatch = CountDownLatch(1)
+        screenCapLatchLock.unlock()
+
+        screenCapClient.requestScreenCap()
+        screenCapLatch!!.await()
+
+        screenCapLatchLock.lock()
+        if (screenCapLatch?.count != 0L) {
+            screenCapLatch!!.countDown()
+        }
+        screenCapLatch = null
+        screenCapLatchLock.unlock()
+
+        return lastScreencap
     }
 }
