@@ -19,6 +19,7 @@
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true"
             tools:ignore="GoogleAppIndexingWarning">
+
         <activity
                 android:name=".activity.ScriptListActivity"
                 android:label="@string/app_name"
@@ -30,12 +31,23 @@
             </intent-filter>
         </activity>
 
+        <activity
+                android:name=".activity.MainActivity"
+                android:label="@string/app_name"
+                android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+
+        <activity
+                android:name=".activity.ScriptRunnerActivity"
+                android:label="@string/app_name"
+                android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+                android:name=".activity.ScreenCaptureImageActivity"
+                android:label="@string/app_name"
+                android:theme="@style/AppTheme.NoActionBar" />
+
         <service
-                android:name=".ScriptService"
-                android:enabled="true"
-                android:exported="false"></service>
-        <service
-                android:name=".ScriptService2"
+                android:name=".service.ScriptService2"
                 android:label="@string/app_name"
                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
@@ -47,19 +59,6 @@
                     android:resource="@xml/accessibility_service_config" />
         </service>
 
-        <activity
-                android:name=".activity.MainActivity"
-                android:label="@string/app_name"
-                android:theme="@style/AppTheme.NoActionBar">
-        </activity>
-        <activity
-                android:name=".activity.ScriptRunnerActivity"
-                android:label="@string/app_name"
-                android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity
-                android:name=".activity.ScreenCaptureImageActivity"
-                android:label="@string/app_name"
-                android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

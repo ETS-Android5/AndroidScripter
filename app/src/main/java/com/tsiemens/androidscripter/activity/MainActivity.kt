@@ -19,6 +19,9 @@ import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.media.projection.MediaProjectionManager
 import com.tsiemens.androidscripter.*
+import com.tsiemens.androidscripter.service.AccessibilitySettingDialogFragment
+import com.tsiemens.androidscripter.service.ScriptService2
+import com.tsiemens.androidscripter.service.ServiceBcastClient
 
 private class MyReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -58,26 +61,12 @@ class MainActivity : AppCompatActivity() {
 
             val example1Script = dataHelper.getAssetUtf8Data("example1.py")
             Log.d(TAG, "example1Script: $example1Script")
-            ScriptDriver(this).runScript(example1Script)
-
-            if (!isMyServiceRunning(ScriptService::class.java)) {
-                Intent(this, ScriptService::class.java).also { intent ->
-                    startService(intent)
-                }
-            }
-        }
-
-        stopBtn.setOnClickListener {
-            if (isMyServiceRunning(ScriptService::class.java)) {
-                Intent(this, ScriptService::class.java).also { intent ->
-                    stopService(intent)
-                }
-            }
+//            ScriptDriver(this).runScript(example1Script)
         }
 
         val testBcastBtn = findViewById<Button>(R.id.testbcast_button)
         testBcastBtn.setOnClickListener {
-            ServiceBcastClient(this).sendRunScript("example1.py")
+//            ServiceBcastClient(this).sendRunScript("example1.py")
         }
 
         val testOcrBtn = findViewById<Button>(R.id.ocr_button)
@@ -94,7 +83,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (!isMyServiceRunning(ScriptService2::class.java)) {
-            AccessibilitySettingDialogFragment().show(supportFragmentManager, "")
+            AccessibilitySettingDialogFragment()
+                .show(supportFragmentManager, "")
         }
 
         if (!Python.isStarted()) {

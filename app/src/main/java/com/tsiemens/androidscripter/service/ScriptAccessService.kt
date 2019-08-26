@@ -1,4 +1,4 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
@@ -7,7 +7,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.gesture.Gesture
 import android.graphics.Path
 import android.graphics.Point
 import android.os.Bundle
@@ -19,9 +18,7 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.support.v4.content.LocalBroadcastManager
-import android.util.DisplayMetrics
-import android.media.projection.MediaProjectionManager
-import android.media.MediaRecorder
+import com.tsiemens.androidscripter.launchAccessibilitySettings
 
 class NodeHandle(val node : AccessibilityNodeInfo) {
     var refCount = 1
@@ -68,7 +65,8 @@ class ScriptService2 : AccessibilityService() {
             service.onReceiveBcast(intent)
         }
     }
-    private val bcastReceiver = ServiceBcastReceiver(this)
+    private val bcastReceiver =
+        ServiceBcastReceiver(this)
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -98,10 +96,11 @@ class ScriptService2 : AccessibilityService() {
         when(event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 typeStr = "WINDOW_STATE_CHANGED"
-                currWindowState = WindowState(
-                    event.packageName?.toString(),
-                    event.className?.toString()
-                )
+                currWindowState =
+                    WindowState(
+                        event.packageName?.toString(),
+                        event.className?.toString()
+                    )
 //                lastWindowStateNode?.dec()
 //                lastWindowStateNode = lastNode
 //                lastNode?.inc()
@@ -120,36 +119,6 @@ class ScriptService2 : AccessibilityService() {
         event.source?.apply {
             recycle()
         }
-        return
-
-        // Commented, but this does work
-        // pressBackButton()
-
-        defer(Runnable {
-            val tabGest = makeClickGesturePercent(0.5f, 0.8f)
-            // callback invoked either when the gesture has been completed or cancelled
-            simpleGestureDispatch(tabGest)
-
-//            event.source?.apply {
-//            lastWindowStateNode?.node.apply {
-
-
-
-                // Use the event and node information to determine
-                // what action to take
-
-                // findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
-                // take action on behalf of the user
-                // performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
-
-                // recycle the nodeInfo object
-                // recycle()
-//            }
-        }, 1000)
-
-        event.source?.apply {
-            recycle()
-        }
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
@@ -163,16 +132,6 @@ class ScriptService2 : AccessibilityService() {
         val type = intent.getStringExtra("type")
         Log.d(TAG, "onReceiveBcast $type")
         when(type) {
-            ServiceBcast.TYPE_RUN_SCRIPT -> {
-                Thread(
-                    Runnable {
-                        val dataHelper = DataUtilHelper(this)
-                        val scriptName = intent.getStringExtra("script")
-                        val script = dataHelper.getAssetUtf8Data(scriptName)
-                        Log.i(TAG, "Running script $scriptName")
-                        ScriptDriver(this).runScript(script)
-                    }).start()
-            }
             ServiceBcast.TYPE_OCR_SCREENSHOT -> {
                 doOcr()
             }
@@ -191,7 +150,8 @@ class ScriptService2 : AccessibilityService() {
 
         // Send ack
         val outIntent = Intent()
-        outIntent.action = ACTION_FROM_SERVICE
+        outIntent.action =
+            ACTION_FROM_SERVICE
         outIntent.putExtra("type", type)
         LocalBroadcastManager.getInstance(this).sendBroadcast(outIntent)
     }
@@ -281,7 +241,6 @@ class AccessibilitySettingDialogFragment : DialogFragment() {
 
 class ServiceBcast {
     companion object {
-        const val TYPE_RUN_SCRIPT = "runScript"
         const val TYPE_OCR_SCREENSHOT = "ocrScreenshot"
         const val TYPE_CLICK = "click"
         const val TYPE_PRESS_BACK = "pressBack"
@@ -291,23 +250,19 @@ class ServiceBcast {
 class ServiceBcastClient(val context: Context) {
     private fun makeIntent(actionType: String): Intent {
         val outIntent = Intent()
-        outIntent.action = ScriptService2.ACTION_TO_SERVICE
+        outIntent.action =
+            ScriptService2.ACTION_TO_SERVICE
         outIntent.putExtra("type", actionType)
         return outIntent
     }
 
-    fun sendRunScript(scriptName: String) {
-        val outIntent = Intent()
-        outIntent.action = ScriptService2.ACTION_TO_SERVICE
-        outIntent.putExtra("type", ServiceBcast.TYPE_RUN_SCRIPT)
-        outIntent.putExtra("script", scriptName)
-        LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
-    }
-
     fun sendDoOcr() {
         val outIntent = Intent()
-        outIntent.action = ScriptService2.ACTION_TO_SERVICE
-        outIntent.putExtra("type", ServiceBcast.TYPE_OCR_SCREENSHOT)
+        outIntent.action =
+            ScriptService2.ACTION_TO_SERVICE
+        outIntent.putExtra("type",
+            ServiceBcast.TYPE_OCR_SCREENSHOT
+        )
         LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
     }
 

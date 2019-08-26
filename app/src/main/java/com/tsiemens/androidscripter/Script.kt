@@ -19,7 +19,7 @@ class Script(context: Context, modName: String, scriptCode: String) {
     fun run(api: ScriptApi) {
         try {
             val pyApiMod = Python.getInstance().getModule("androidscripter.api")
-            val pyApi = pyApiMod.callAttr("newApiFromApi", api)
+            val pyApi = pyApiMod.callAttr("newApi", api)
             module.callAttr("run", pyApi)
             api.logInternal("SCRIPT EXITED")
         } catch (e: PyException) {

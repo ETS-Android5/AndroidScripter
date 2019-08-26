@@ -7,9 +7,9 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.*
 import android.widget.TextView
-import com.tsiemens.androidscripter.AccessibilitySettingDialogFragment
+import com.tsiemens.androidscripter.service.AccessibilitySettingDialogFragment
 import com.tsiemens.androidscripter.R
-import com.tsiemens.androidscripter.ScriptService2
+import com.tsiemens.androidscripter.service.ScriptService2
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.service.isMyServiceRunning
 import com.tsiemens.androidscripter.storage.*
@@ -108,7 +108,8 @@ class ScriptListActivity : AppCompatActivity() {
         tryGuaranteeUsageStatsAccess(this)
 
         if (!isMyServiceRunning(this, ScriptService2::class.java)) {
-            AccessibilitySettingDialogFragment().show(supportFragmentManager, "")
+            AccessibilitySettingDialogFragment()
+                .show(supportFragmentManager, "")
         }
     }
 
