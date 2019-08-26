@@ -16,6 +16,8 @@ class ScriptApi(val ctx: Context, val logChangeListener: LogChangeListener?) {
     val logLock = ReentrantReadWriteLock()
     val interrupted = AtomicBoolean(false)
 
+    val serviceClient = ServiceBcastClient(ctx)
+
     companion object {
         val TAG = ScriptApi::class.java.simpleName
 
@@ -62,6 +64,14 @@ class ScriptApi(val ctx: Context, val logChangeListener: LogChangeListener?) {
     fun foregroundWindowState(): WindowState? {
         maybeEndThread()
         return ScriptService2.currWindowState
+    }
+
+    fun sendClick(x: Float, y: Float, isPercent: Boolean = false) {
+        serviceClient.sendClick(x, y, isPercent)
+    }
+
+    fun pressBack() {
+        serviceClient.pressBack()
     }
 
     fun logInternal(str: String) {

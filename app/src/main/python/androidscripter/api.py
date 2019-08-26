@@ -18,6 +18,12 @@ class Api:
     def foreground_window_state(self):
         return self._api.foregroundWindowState()
 
+    def send_click(self, x, y, is_percent=False):
+        return self._api.sendClick(x, y, is_percent)
+
+    def press_back(self):
+        return self._api.pressBack()
+
 def newApi(android_context):
     return Api(android_context)
 

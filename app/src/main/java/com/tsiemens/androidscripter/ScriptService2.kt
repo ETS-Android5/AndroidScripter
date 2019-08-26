@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.gesture.Gesture
 import android.graphics.Path
 import android.graphics.Point
 import android.os.Bundle
@@ -127,20 +128,7 @@ class ScriptService2 : AccessibilityService() {
         defer(Runnable {
             val tabGest = makeClickGesturePercent(0.5f, 0.8f)
             // callback invoked either when the gesture has been completed or cancelled
-            val callback = object : AccessibilityService.GestureResultCallback() {
-                override fun onCompleted(gestureDescription: GestureDescription) {
-                    super.onCompleted(gestureDescription)
-                    Log.d(TAG, "gesture completed")
-                }
-
-                override fun onCancelled(gestureDescription: GestureDescription) {
-                    super.onCancelled(gestureDescription)
-                    Log.d(TAG, "gesture cancelled")
-                }
-            }
-
-            val ret = dispatchGesture(tabGest, callback, null)
-            Log.d(TAG, "dispatchGesture: $ret")
+            simpleGestureDispatch(tabGest)
 
 //            event.source?.apply {
 //            lastWindowStateNode?.node.apply {
@@ -188,6 +176,17 @@ class ScriptService2 : AccessibilityService() {
             ServiceBcast.TYPE_OCR_SCREENSHOT -> {
                 doOcr()
             }
+            ServiceBcast.TYPE_CLICK -> {
+                val x = intent.getFloatExtra("x", Float.MAX_VALUE)
+                val y = intent.getFloatExtra("y", Float.MAX_VALUE)
+                val isPercent = intent.getBooleanExtra("isPercent", false)
+                if (x == Float.MAX_VALUE || y == Float.MAX_VALUE) {
+                    Log.e(TAG, "TYPE_CLICK action provided with invalid x,y")
+                } else {
+                    doClick(x, y, isPercent)
+                }
+            }
+            ServiceBcast.TYPE_PRESS_BACK -> { pressBackButton() }
         }
 
         // Send ack
@@ -197,7 +196,30 @@ class ScriptService2 : AccessibilityService() {
         LocalBroadcastManager.getInstance(this).sendBroadcast(outIntent)
     }
 
-    fun makeClickGesturePercent(xPct: Float, yPct: Float): GestureDescription {
+    private fun simpleGestureDispatch(gesture: GestureDescription) {
+        // callback invoked either when the gesture has been completed or cancelled
+        val callback = object : AccessibilityService.GestureResultCallback() {
+            override fun onCompleted(gestureDescription: GestureDescription) {
+                super.onCompleted(gestureDescription)
+                Log.d(TAG, "gesture completed")
+            }
+
+            override fun onCancelled(gestureDescription: GestureDescription) {
+                super.onCancelled(gestureDescription)
+                Log.d(TAG, "gesture cancelled")
+            }
+        }
+
+        val ret = dispatchGesture(gesture, callback, null)
+        Log.d(TAG, "dispatchGesture: $ret")
+    }
+
+    private fun doClick(x: Float, y: Float, isPercent: Boolean = false) {
+        val gesture = if (isPercent) makeClickGesturePercent(x, y) else makeClickGesture(x, y)
+        simpleGestureDispatch(gesture)
+    }
+
+    private fun makeClickGesturePercent(xPct: Float, yPct: Float): GestureDescription {
         if (xPct > 1.0 || yPct > 1.0) {
             throw IllegalArgumentException("Percent value must be from 0 to 1")
         }
@@ -208,7 +230,7 @@ class ScriptService2 : AccessibilityService() {
         return makeClickGesture(outPoint.x * xPct, outPoint.y * yPct)
     }
 
-    fun makeClickGesture(x: Float, y: Float): GestureDescription {
+    private fun makeClickGesture(x: Float, y: Float): GestureDescription {
         val touchPath = Path().apply {
             moveTo(x, y)
         }
@@ -259,12 +281,21 @@ class AccessibilitySettingDialogFragment : DialogFragment() {
 
 class ServiceBcast {
     companion object {
-        val TYPE_RUN_SCRIPT = "runScript"
-        val TYPE_OCR_SCREENSHOT = "ocrScreenshot"
+        const val TYPE_RUN_SCRIPT = "runScript"
+        const val TYPE_OCR_SCREENSHOT = "ocrScreenshot"
+        const val TYPE_CLICK = "click"
+        const val TYPE_PRESS_BACK = "pressBack"
     }
 }
 
 class ServiceBcastClient(val context: Context) {
+    private fun makeIntent(actionType: String): Intent {
+        val outIntent = Intent()
+        outIntent.action = ScriptService2.ACTION_TO_SERVICE
+        outIntent.putExtra("type", actionType)
+        return outIntent
+    }
+
     fun sendRunScript(scriptName: String) {
         val outIntent = Intent()
         outIntent.action = ScriptService2.ACTION_TO_SERVICE
@@ -279,57 +310,17 @@ class ServiceBcastClient(val context: Context) {
         outIntent.putExtra("type", ServiceBcast.TYPE_OCR_SCREENSHOT)
         LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
     }
-}
 
-class RecorderHelper(val context: Context) {
-//    val mMediaProjectionManager = MediaProjection()
-
-    val mProjectionManager : MediaProjectionManager =
-        context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-    var mMediaRecorder : MediaRecorder = MediaRecorder()
-
-    fun otherstuff() {
-        val metrics = DisplayMetrics()
-//        getWindowManager().getDefaultDisplay().getMetrics(metrics)
-//        mScreenDensity = metrics.densityDpi
-
-
+    fun sendClick(x: Float, y: Float, isPercent: Boolean = false) {
+        val outIntent = makeIntent(ServiceBcast.TYPE_CLICK)
+        outIntent.putExtra("x", x)
+        outIntent.putExtra("y", y)
+        outIntent.putExtra("isPercent", isPercent)
+        LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
     }
 
-//    fun stuff() {
-//        val TAG = "RecorderHelper"
-//        Log.d(TAG, "startScreenRecord:sMuxer=$sMuxer")
-//        synchronized(sSync) {
-//            if (sMuxer == null) {
-//                val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
-//                // get MediaProjection
-//                val projection = mMediaProjectionManager.getMediaProjection(resultCode, intent)
-//                if (projection != null) {
-//                    val metrics = getResources().getDisplayMetrics()
-//                    val density = metrics.densityDpi
-//
-//                    if (DEBUG) Log.v(TAG, "startRecording:")
-//                    try {
-//                        sMuxer = MediaMuxerWrapper(".mp4") // if you record audio only, ".m4a" is also OK.
-//                        if (true) {
-//                            // for screen capturing
-//                            MediaScreenEncoder(
-//                                sMuxer, mMediaEncoderListener,
-//                                projection, metrics.widthPixels, metrics.heightPixels, density
-//                            )
-//                        }
-//                        if (true) {
-//                            // for audio capturing
-//                            MediaAudioEncoder(sMuxer, mMediaEncoderListener)
-//                        }
-//                        sMuxer.prepare()
-//                        sMuxer.startRecording()
-//                    } catch (e: IOException) {
-//                        Log.e(TAG, "startScreenRecord:", e)
-//                    }
-//
-//                }
-//            }
-//        }
-//    }
+    fun pressBack() {
+        val outIntent = makeIntent(ServiceBcast.TYPE_PRESS_BACK)
+        LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
+    }
 }
