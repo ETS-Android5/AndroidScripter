@@ -1,5 +1,3 @@
-import java
-
 class Api:
     def __init__(self, api):
         self._api = api
