@@ -6,14 +6,12 @@ import android.util.Log
 import com.tsiemens.androidscripter.service.ScriptService2
 import com.tsiemens.androidscripter.service.ServiceBcastClient
 import com.tsiemens.androidscripter.service.WindowState
-import java.lang.RuntimeException
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
-
-class ScriptUtilException(msg: String): RuntimeException(msg)
+import kotlin.math.min
 
 @Suppress("UNUSED")
 class ScriptApi(val ctx: Context,
@@ -99,5 +97,16 @@ class ScriptApi(val ctx: Context,
     fun log(str: String) {
         logInternal(str)
         maybeEndThread()
+    }
+
+    fun sleep(seconds: Float) {
+        var remainingMillis = (seconds * 1000).toLong()
+        val interval: Long = 1000
+        while (remainingMillis > 0) {
+            maybeEndThread()
+            val nextSleep = min(interval, remainingMillis)
+            Thread.sleep(nextSleep)
+            remainingMillis -= nextSleep
+        }
     }
 }

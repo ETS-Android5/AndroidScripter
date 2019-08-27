@@ -5,6 +5,9 @@ class Api:
     def log(self, string):
         self._api.log(string)
 
+    def sleep(self, seconds):
+        self._api.sleep(seconds)
+
     def foreground_activity_package(self):
         return self._api.foregroundActivityPackage()
 
