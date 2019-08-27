@@ -5,7 +5,12 @@
     <string name="action_edit">Edit</string>
     <string name="action_refresh">Refresh</string>
 
+    <string-array name="overlay_displays_ids">
+        <item>script_log</item>
+        <item>ocr</item>
+    </string-array>
     <string-array name="overlay_displays">
+        <item>Script &amp; Log</item>
         <item>Screen Text</item>
     </string-array>
 
@@ -13,4 +18,5 @@
     <string name="stop">Stop</string>
     <string name="log">Log</string>
     <string name="title_activity_script_list">ScriptListActivity</string>
+    <string name="show_overlay">Show Overlay</string>
 </resources>

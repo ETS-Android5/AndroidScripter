@@ -11,18 +11,26 @@ import android.view.*
 import android.widget.TextView
 import android.view.MotionEvent
 import android.view.WindowManager
+import android.widget.AdapterView
 import android.widget.Button
+import android.widget.Spinner
+import java.lang.IllegalStateException
 import kotlin.math.max
 
+class OverlayContainer(val root: View) {
+    val spinner = root.findViewById<Spinner>(R.id.overlay_detail_spinner)
+    val logTv = root.findViewById<TextView>(R.id.log_tv)
+}
+
 // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
-class OverlayManager(val context: Context) {
+class OverlayManager(private val context: Context) {
     companion object {
         val TAG = OverlayManager::class.java.simpleName
     }
 
-    var wm: WindowManager? = null
-    var params: WindowManager.LayoutParams? = null
-    var overlay: View? = null
+    private var wm: WindowManager? = null
+    private var params: WindowManager.LayoutParams? = null
+    private var overlay: OverlayContainer? = null
 
     @TargetApi(Build.VERSION_CODES.O)
     @SuppressWarnings("ClickableViewAccessibility")
@@ -31,8 +39,10 @@ class OverlayManager(val context: Context) {
             return
         }
         Log.v(TAG, "showOverlay")
-        overlay = LayoutInflater.from(context).inflate(R.layout.overlay_base, null)
-        overlay!!.findViewById<View>(R.id.overlay_details_all).visibility = View.GONE
+        val overlayRoot = LayoutInflater.from(context).inflate(R.layout.overlay_base, null)
+        val overlay = OverlayContainer(overlayRoot)
+        this.overlay = overlay
+        overlayRoot!!.findViewById<View>(R.id.overlay_details_all).visibility = View.GONE
 
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -45,14 +55,14 @@ class OverlayManager(val context: Context) {
         params!!.gravity = ( Gravity.START or Gravity.TOP )
         params!!.title = "Overlay"
         wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        wm!!.addView(overlay, params)
+        wm!!.addView(overlayRoot, params)
 
-        val handle = overlay!!.findViewById<TextView>(R.id.overlay_handle)
+        val handle = overlayRoot.findViewById<TextView>(R.id.overlay_handle)
 
-        val expander = overlay!!.findViewById<TextView>(R.id.overlay_expand)
+        val expander = overlayRoot.findViewById<TextView>(R.id.overlay_expand)
         expander.setOnClickListener {
-            if (overlay != null) {
-                val details = overlay!!.findViewById<View>(R.id.overlay_details_all)
+            if (this.overlay != null) {
+                val details = overlayRoot.findViewById<View>(R.id.overlay_details_all)
                 details.visibility = when(details.visibility) {
                     View.VISIBLE -> View.GONE
                     else -> View.VISIBLE
@@ -60,16 +70,39 @@ class OverlayManager(val context: Context) {
             }
         }
 
-        overlay!!.findViewById<Button>(R.id.overlay_ocr_clear_button).setOnClickListener {
+        overlay.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                overlay.spinner.setSelection(0)
+            }
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+                Log.d(TAG, "onItemSelected for panel spinner: $pos")
+                val ids = context.resources.getStringArray(R.array.overlay_displays_ids)
+                when (ids[pos]) {
+                    "script_log" -> changePanelVisibility(R.id.overlay_log_panel)
+                    "ocr" -> changePanelVisibility(R.id.overlay_ocr_panel)
+                    else -> throw IllegalStateException("Invalid id ${ids[pos]}")
+                }
+            }
+        }
+        changePanelVisibility(R.id.overlay_log_panel)
+
+        overlayRoot.findViewById<Button>(R.id.overlay_ocr_clear_button).setOnClickListener {
             updateOcrText("")
         }
 
-        handle.setOnTouchListener(ViewDragger(params!!, overlay!!, wm!!))
+        handle.setOnTouchListener(ViewDragger(params!!, overlayRoot, wm!!))
 
-        val sizeFrame = overlay!!.findViewById<View>(R.id.overlay_size_grower_frame)
-        val sizeRefView = overlay!!.findViewById<View>(R.id.overlay_details_and_grower)
-        val sizeHandle = overlay!!.findViewById<View>(R.id.overlay_sizing_handle)
+        val sizeFrame = overlayRoot.findViewById<View>(R.id.overlay_size_grower_frame)
+        val sizeRefView = overlayRoot.findViewById<View>(R.id.overlay_details_and_grower)
+        val sizeHandle = overlayRoot.findViewById<View>(R.id.overlay_sizing_handle)
         sizeHandle.setOnTouchListener(ViewResizer(sizeFrame, sizeRefView, wm!!))
+
+        val screenSize = Point()
+        wm!!.defaultDisplay.getSize(screenSize)
+        params!!.x = 0
+        params!!.y = (screenSize.y * 0.3).toInt()
+        wm!!.updateViewLayout(overlayRoot, params)
     }
 
     fun started(): Boolean {
@@ -86,19 +119,38 @@ class OverlayManager(val context: Context) {
 
     fun destroy() {
         if (overlay != null) {
-            wm!!.removeView(overlay)
+            wm!!.removeView(overlay!!.root)
+            overlay = null
+        }
+    }
+
+    private fun changePanelVisibility(panelId: Int) {
+        if (overlay != null) {
+            val panelIds = arrayOf(
+                R.id.overlay_log_panel,
+                R.id.overlay_ocr_panel)
+            panelIds.forEach { id ->
+                val panel = overlay!!.root.findViewById<View>(id)
+                panel.visibility = if (id == panelId) View.VISIBLE else View.GONE
+            }
         }
     }
 
     fun updateOcrText(text: String) {
         if (overlay != null) {
-            val ocrTv = overlay!!.findViewById<TextView>(R.id.screen_textview)
+            val ocrTv = overlay!!.root.findViewById<TextView>(R.id.screen_textview)
             ocrTv.text = text
         }
     }
 
     fun setOnCaptureTextButtonClick(cl: View.OnClickListener) {
-        overlay!!.findViewById<Button>(R.id.overlay_ocr_capture_button).setOnClickListener(cl)
+        overlay!!.root.findViewById<Button>(R.id.overlay_ocr_capture_button).setOnClickListener(cl)
+    }
+
+    fun addLogEntry(str: String) {
+        if (overlay != null) {
+
+        }
     }
 }
 

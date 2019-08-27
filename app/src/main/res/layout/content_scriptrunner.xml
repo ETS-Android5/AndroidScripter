@@ -32,6 +32,12 @@
 
     </LinearLayout>
 
+    <CheckBox
+            android:id="@+id/show_overlay_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/show_overlay" />
+
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

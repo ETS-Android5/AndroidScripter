@@ -7,15 +7,12 @@ import android.os.Handler
 import android.support.v7.widget.Toolbar
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.TextView
 import com.tsiemens.androidscripter.*
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
+import android.widget.*
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.storage.*
-import android.widget.ScrollView
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.ReentrantLock
 
@@ -44,6 +41,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     lateinit var logScrollView: ScrollView
     lateinit var logTv: TextView
     lateinit var startButton: Button
+    lateinit var showOverlayCheck: CheckBox
 
     var lastScreencap: Bitmap? = null
     val screenCapLatchLock = ReentrantLock()
@@ -83,6 +81,12 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         val stopButton = findViewById<Button>(R.id.stop_button)
         stopButton.setOnClickListener { onStopButton() }
+
+        showOverlayCheck = findViewById(R.id.show_overlay_checkbox)
+        showOverlayCheck.isChecked = false
+        showOverlayCheck.setOnCheckedChangeListener { _, checked ->
+            enableOverlay(checked)
+        }
 
         if (scriptKey.type == ScriptType.user) {
             startButton.isEnabled = false
@@ -163,7 +167,15 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         super.onActivityResult(requestCode, resultCode, data)
     }
 
-    fun tryStartOverlay() {
+    private fun enableOverlay(enable: Boolean) {
+        if (enable) {
+            tryStartOverlay()
+        } else if (overlayManager.started()) {
+            overlayManager.destroy()
+        }
+    }
+
+    private fun tryStartOverlay() {
         if (overlayManager.permittedToShow() && !overlayManager.started()) {
             overlayManager.showOverlay()
 
@@ -227,7 +239,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     fun onStartButton() {
         startProjection()
-        tryStartOverlay()
 
         if (scriptCode == null && scriptFile.key.type == ScriptType.sample) {
             scriptCode = dataHelper.getAssetUtf8Data((scriptFile as SampleScriptFile).filename)
