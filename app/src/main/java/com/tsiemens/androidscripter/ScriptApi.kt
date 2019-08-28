@@ -34,7 +34,7 @@ class ScriptApi(val ctx: Context,
         }
     }
 
-    inner class LogEntry(val message: String) {
+    class LogEntry(val message: String) {
         val time = System.currentTimeMillis()
 
         fun prettyTime(): String {

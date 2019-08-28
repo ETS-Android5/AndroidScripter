@@ -10,6 +10,9 @@ import com.chaquo.python.android.AndroidPlatform
 class Script(context: Context, modName: String, scriptCode: String) {
     val module: PyObject
 
+    /**
+     * @throws: PyException
+     */
     init {
         ensurePythonStarted(context)
         val modBuilder = Python.getInstance().getModule("androidscripter.modbuilder")

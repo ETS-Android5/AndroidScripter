@@ -11,6 +11,7 @@ import com.tsiemens.androidscripter.*
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
+import com.chaquo.python.PyException
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.storage.*
 import com.tsiemens.androidscripter.widget.ScriptController
@@ -276,17 +277,20 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     fun onStartButton() {
         if (script == null && scriptCode != null) {
-            startProjection()
+            try {
+                script = Script(this, scriptFile.key.toString(), scriptCode!!)
+                startProjection()
 
-            script = Script(this, scriptFile.key.toString(), scriptCode!!)
-
-            scriptThread = Thread(
-                Runnable {
-                    script?.run(scriptApi)
-                    onScriptEnded()
-                })
-            scriptUIControllers.notifyScriptRunnabilityStateChanged()
-            scriptThread!!.start()
+                scriptThread = Thread(
+                    Runnable {
+                        script?.run(scriptApi)
+                        onScriptEnded()
+                    })
+                scriptUIControllers.notifyScriptRunnabilityStateChanged()
+                scriptThread!!.start()
+            } catch (e: PyException) {
+                onLogChanged(ScriptApi.LogEntry("ERROR: ${e.message}"))
+            }
         }
     }
 

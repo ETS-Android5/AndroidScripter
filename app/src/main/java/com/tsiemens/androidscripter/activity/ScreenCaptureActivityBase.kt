@@ -184,7 +184,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
 
     fun stopProjection() {
         Log.i(TAG, "stopProjection")
-        looperHandler.post { projection!!.stop() }
+        looperHandler.post { projection?.stop() }
     }
 
     // from OnImageAvailableListener
