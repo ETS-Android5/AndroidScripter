@@ -2,11 +2,18 @@ package com.tsiemens.androidscripter.storage
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Environment
 import android.util.Log
+import com.tsiemens.androidscripter.TesseractHelper
+import com.tsiemens.androidscripter.storage.StorageUtil.Companion.copyInToOut
+import com.tsiemens.androidscripter.storage.StorageUtil.Companion.prepareDirectory
+import org.apache.commons.io.IOUtils
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.*
 import java.lang.IllegalArgumentException
 import java.lang.Long.max
+import java.lang.Long.remainderUnsigned
 
 enum class ScriptType {
     sample,
@@ -48,7 +55,11 @@ class SampleScriptFile(index: Long, val filename: String, name: String):
 
 class UserScriptFile(index: Long,
                      name: String,
-                     var url: String): ScriptFile(ScriptKey(ScriptType.user, index), name)
+                     var url: String): ScriptFile(ScriptKey(ScriptType.user, index), name) {
+    fun storageFilename(): String {
+        return key.index.toString() + ".py"
+    }
+}
 
 class ScriptFileStorage(val context: Context) {
     companion object {
@@ -56,6 +67,8 @@ class ScriptFileStorage(val context: Context) {
 
         val SCRIPT_ENTRY_PREFS = "user_scripts_prefs"
         val SCRIPT_ENTRIES_JSON = "script_entries"
+
+        private val CODE_DIRECTORY = Environment.getExternalStorageDirectory().toString() + "/AndroidScripterUserScripts/"
     }
 
     class ScriptJson {
@@ -63,6 +76,10 @@ class ScriptFileStorage(val context: Context) {
             val NAME = "name"
             val URL = "filename"
         }
+    }
+
+    init {
+        prepareDirectory(CODE_DIRECTORY)
     }
 
     private fun getSampleScriptFilesMap(): MutableMap<Long, SampleScriptFile> {
@@ -150,6 +167,27 @@ class ScriptFileStorage(val context: Context) {
             ScriptType.sample -> getSampleScriptFilesMap()[key.index]
             ScriptType.user -> getUserScriptFilesMap()[key.index]
         }
+    }
+
+    fun putUserScriptCode(script: UserScriptFile, code: String) {
+        val pathToCodeFile = CODE_DIRECTORY + "/" + script.storageFilename()
+        val out = FileOutputStream(pathToCodeFile)
+        val ins = StringReader(code)
+        IOUtils.copy(ins, out, "utf-8")
+        out.close()
+        Log.i(TAG, "Saved code to $pathToCodeFile")
+    }
+
+    fun getUserScriptCode(script: UserScriptFile): String? {
+        val pathToCodeFile = CODE_DIRECTORY + "/" + script.storageFilename()
+        if (File(pathToCodeFile).exists()) {
+            val ins = FileInputStream(pathToCodeFile)
+            val out = StringWriter()
+            IOUtils.copy(ins, out, "utf-8")
+            ins.close()
+            return out.toString()
+        }
+        return null
     }
 }
 

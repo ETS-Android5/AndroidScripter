@@ -9,6 +9,7 @@ import android.support.v4.content.ContextCompat
 import android.util.Log
 import com.googlecode.tesseract.android.TessBaseAPI
 import com.tsiemens.androidscripter.storage.StorageUtil
+import com.tsiemens.androidscripter.storage.StorageUtil.Companion.prepareDirectory
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -24,27 +25,6 @@ class TesseractHelper(val activity: Activity, val permissionRequestCode: Int) {
         private val lang = "eng"
         private val DATA_PATH = Environment.getExternalStorageDirectory().toString() + "/TesseractSample/";
         private val TESSDATA = "tessdata"
-    }
-
-    /**
-     * Prepare directory on external storage
-     *
-     * @param path
-     * @throws Exception
-     */
-    private fun prepareDirectory(path: String) {
-
-        val dir = File(path)
-        if (!dir.exists()) {
-            if (!dir.mkdirs()) {
-                Log.e(
-                    TAG,
-                    "ERROR: Creation of directory $path failed, check does Android Manifest have permission to write to external storage."
-                )
-            }
-        } else {
-            Log.i(TAG, "Created directory $path")
-        }
     }
 
     /**

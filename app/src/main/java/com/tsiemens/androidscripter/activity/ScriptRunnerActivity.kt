@@ -142,12 +142,21 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         scriptNameTv.text = scriptFile.name
     }
 
-    private fun loadUserScript() {
+    private fun loadUserScript(tryStorage: Boolean = true) {
+        if (tryStorage) {
+            scriptCode = scriptStorage.getUserScriptCode(scriptFile as UserScriptFile)
+            if (scriptCode != null) {
+                // We loaded
+                return
+            }
+        }
         val reqTask = RequestTask()
         reqTask.listener = object : RequestTask.OnResponseListener {
             override fun onResponse(resp: String?) {
                 if (resp != null) {
                     scriptCode = resp
+                    scriptStorage.putUserScriptCode(scriptFile as UserScriptFile,
+                                                    scriptCode!!)
                     script = null
                     scriptUIControllers.notifyScriptRunnabilityStateChanged()
                     Toast.makeText(this@ScriptRunnerActivity,
@@ -237,7 +246,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
             R.id.action_edit -> { doEditScriptDetails(); true }
             R.id.action_refresh -> {
                 if (scriptFile.key.type == ScriptType.user) {
-                    loadUserScript()
+                    loadUserScript(tryStorage = false)
                 }
                 true
             }
