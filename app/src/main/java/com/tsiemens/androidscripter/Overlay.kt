@@ -14,6 +14,8 @@ import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.Button
 import android.widget.Spinner
+import com.tsiemens.androidscripter.widget.ScriptController
+import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
 import java.lang.IllegalStateException
 import kotlin.math.max
 
@@ -147,10 +149,13 @@ class OverlayManager(private val context: Context) {
         overlay!!.root.findViewById<Button>(R.id.overlay_ocr_capture_button).setOnClickListener(cl)
     }
 
-    fun addLogEntry(str: String) {
-        if (overlay != null) {
-
-        }
+    fun createScriptControllerUIHelper(controller: ScriptController): ScriptControllerUIHelper {
+        return ScriptControllerUIHelper(
+            overlay!!.root.findViewById(R.id.overlay_script_start_button),
+            overlay!!.root.findViewById(R.id.overlay_script_stop_button),
+            overlay!!.logTv,
+            controller
+        )
     }
 }
 

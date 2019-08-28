@@ -13,6 +13,9 @@ import android.view.MenuItem
 import android.widget.*
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.storage.*
+import com.tsiemens.androidscripter.widget.ScriptController
+import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
+import com.tsiemens.androidscripter.widget.ScriptControllerUIHelperColl
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.ReentrantLock
 
@@ -40,12 +43,15 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     lateinit var scriptNameTv: TextView
     lateinit var logScrollView: ScrollView
     lateinit var logTv: TextView
-    lateinit var startButton: Button
     lateinit var showOverlayCheck: CheckBox
 
     var lastScreencap: Bitmap? = null
     val screenCapLatchLock = ReentrantLock()
     var screenCapLatch: CountDownLatch? = null
+
+    var overlayScriptControllerUIHelper: ScriptControllerUIHelper? = null
+    val scriptUIControllers = ScriptControllerUIHelperColl()
+    lateinit var scriptController: ScriptController
 
     companion object {
         val INTENT_EXTRA_SCRIPT_KEY = "script_key"
@@ -67,6 +73,10 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         val scriptKey = ScriptKey.fromString(keyStr)
         scriptFile = scriptStorage.getScript(scriptKey)!!
 
+        if (scriptFile.key.type == ScriptType.sample) {
+            scriptCode = dataHelper.getAssetUtf8Data((scriptFile as SampleScriptFile).filename)
+        }
+
         updateScriptDetailsViews()
 
         logScrollView = findViewById(R.id.log_scrollview)
@@ -76,11 +86,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
         logTv = findViewById(R.id.log_tv)
 
-        startButton = findViewById<Button>(R.id.start_button)
-        startButton.setOnClickListener { onStartButton() }
+        val startButton = findViewById<Button>(R.id.start_button)
 
         val stopButton = findViewById<Button>(R.id.stop_button)
-        stopButton.setOnClickListener { onStopButton() }
 
         showOverlayCheck = findViewById(R.id.show_overlay_checkbox)
         showOverlayCheck.isChecked = false
@@ -89,9 +97,30 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
 
         if (scriptKey.type == ScriptType.user) {
-            startButton.isEnabled = false
             loadUserScript()
         }
+
+        scriptController = object : ScriptController {
+
+            override fun onStartPressed() {
+                this@ScriptRunnerActivity.onStartButton()
+            }
+
+            override fun onStopPressed() {
+                this@ScriptRunnerActivity.onStopButton()
+            }
+
+            override fun scriptIsRunning(): Boolean {
+                return scriptThread != null
+            }
+
+            override fun scriptIsRunnable(): Boolean {
+                return scriptCode != null
+            }
+        }
+
+        scriptUIControllers.helpers.add(
+            ScriptControllerUIHelper(startButton, stopButton, logTv, scriptController) )
 
         screenCapClient = object : ScreenCaptureClient() {
                 override fun onScreenCap(bm: Bitmap) {
@@ -101,23 +130,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                     screenCapLatchLock.lock()
                     screenCapLatch?.countDown()
                     screenCapLatchLock.unlock()
-
-//                    val imgText = tessHelper.extractText(bm)
-//                    lastImgText = imgText
-//                    Log.i(TAG, "Image text: \"$imgText\"")
-//
-//                    val action = {
-//                        if (imgText != null) {
-//                            overlayManager.updateOcrText(imgText)
-//                        }
-//                        mImgView!!.setImageBitmap(bm)
-//                    }
-//
-//                    if (Looper.myLooper() == Looper.getMainLooper()) {
-//                       action()
-//                    } else {
-//                        runOnUiThread(action)
-//                    }
                 }
             }
         setScreenCaptureClient(screenCapClient)
@@ -141,7 +153,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                 if (resp != null) {
                     scriptCode = resp
                     script = null
-                    startButton.isEnabled = true
+                    scriptUIControllers.notifyScriptRunnabilityStateChanged()
                     Toast.makeText(this@ScriptRunnerActivity,
                         "Script loaded", Toast.LENGTH_SHORT).show()
                 } else {
@@ -171,13 +183,19 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         if (enable) {
             tryStartOverlay()
         } else if (overlayManager.started()) {
-            overlayManager.destroy()
+            stopOverlay()
         }
     }
 
     private fun tryStartOverlay() {
         if (overlayManager.permittedToShow() && !overlayManager.started()) {
             overlayManager.showOverlay()
+            if (overlayScriptControllerUIHelper != null) {
+                scriptUIControllers.helpers.remove(overlayScriptControllerUIHelper!!)
+            }
+            overlayScriptControllerUIHelper =
+                overlayManager.createScriptControllerUIHelper(scriptController)
+            scriptUIControllers.helpers.add(overlayScriptControllerUIHelper!!)
 
             overlayManager.setOnCaptureTextButtonClick(View.OnClickListener {
                 Log.i(TAG, "Capture in overlay pressed")
@@ -187,9 +205,17 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    private fun stopOverlay() {
+        if (overlayScriptControllerUIHelper != null) {
+            scriptUIControllers.helpers.remove(overlayScriptControllerUIHelper!!)
+            overlayScriptControllerUIHelper = null
+        }
         overlayManager.destroy()
+    }
+
+    override fun onDestroy() {
+        stopOverlay()
+        super.onDestroy()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -238,29 +264,31 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     }
 
     fun onStartButton() {
-        startProjection()
-
-        if (scriptCode == null && scriptFile.key.type == ScriptType.sample) {
-            scriptCode = dataHelper.getAssetUtf8Data((scriptFile as SampleScriptFile).filename)
-        }
-
         if (script == null && scriptCode != null) {
+            startProjection()
+
             script = Script(this, scriptFile.key.toString(), scriptCode!!)
 
             scriptThread = Thread(
                 Runnable {
                     script?.run(scriptApi)
+                    onScriptEnded()
                 })
+            scriptUIControllers.notifyScriptRunnabilityStateChanged()
             scriptThread!!.start()
         }
     }
 
     fun onStopButton() {
-        stopProjection()
-
         scriptThread?.interrupt()
+        onScriptEnded()
+    }
+
+    fun onScriptEnded() {
+        stopProjection()
         scriptThread = null
         script = null
+        scriptUIControllers.notifyScriptRunnabilityStateChanged()
     }
 
     private fun scrollLogToBottom() {
@@ -274,9 +302,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     // From LogChangeListener
     override fun onLogChanged(newLog: ScriptApi.LogEntry) {
-        Handler(mainLooper).post {
-            logTv.append(newLog.toString() + "\n")
-        }
+        scriptUIControllers.onLog(newLog)
     }
 
     // NOTE this method will block the thread.
