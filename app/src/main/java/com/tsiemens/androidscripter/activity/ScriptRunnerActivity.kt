@@ -184,6 +184,12 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     }
 
     private fun tryStartOverlay() {
+        if (!overlayManager.permittedToShow()) {
+            Log.w(TAG, "Not permitted to show overlay")
+            overlayManager.launchOverlayPermissionsActivity()
+            showOverlayCheck.isChecked = false
+            return
+        }
         if (overlayManager.permittedToShow() && !overlayManager.started()) {
             overlayManager.showOverlay()
             if (overlayScriptControllerUIHelper != null) {
