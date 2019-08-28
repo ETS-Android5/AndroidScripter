@@ -107,6 +107,7 @@
                                 android:text="@string/log"/>
 
                         <ScrollView
+                                android:id="@+id/log_scrollview"
                                 android:layout_width="wrap_content"
                                 android:layout_height="80dp">
                             <TextView

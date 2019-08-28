@@ -41,7 +41,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     var scriptApi = ScriptApi(this, this, this)
 
     lateinit var scriptNameTv: TextView
-    lateinit var logScrollView: ScrollView
     lateinit var logTv: TextView
     lateinit var showOverlayCheck: CheckBox
 
@@ -79,11 +78,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         updateScriptDetailsViews()
 
-        logScrollView = findViewById(R.id.log_scrollview)
-        logScrollView.addOnLayoutChangeListener {
-                view: View, i: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int ->
-            scrollLogToBottom()
-        }
         logTv = findViewById(R.id.log_tv)
 
         val startButton = findViewById<Button>(R.id.start_button)
@@ -119,8 +113,10 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
             }
         }
 
+        val logScrollView = findViewById<ScrollView>(R.id.log_scrollview)
+
         scriptUIControllers.helpers.add(
-            ScriptControllerUIHelper(startButton, stopButton, logTv, scriptController) )
+            ScriptControllerUIHelper(startButton, stopButton, logTv, logScrollView, scriptController) )
 
         screenCapClient = object : ScreenCaptureClient() {
                 override fun onScreenCap(bm: Bitmap) {
@@ -289,15 +285,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         scriptThread = null
         script = null
         scriptUIControllers.notifyScriptRunnabilityStateChanged()
-    }
-
-    private fun scrollLogToBottom() {
-        logScrollView.apply {
-            val lastChild = getChildAt(childCount - 1)
-            val bottom = lastChild.bottom + paddingBottom
-            val delta = bottom - (scrollY+ height)
-            smoothScrollBy(0, delta)
-        }
     }
 
     // From LogChangeListener

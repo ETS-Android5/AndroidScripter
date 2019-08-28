@@ -154,6 +154,7 @@ class OverlayManager(private val context: Context) {
             overlay!!.root.findViewById(R.id.overlay_script_start_button),
             overlay!!.root.findViewById(R.id.overlay_script_stop_button),
             overlay!!.logTv,
+            overlay!!.root.findViewById(R.id.log_scrollview),
             controller
         )
     }
