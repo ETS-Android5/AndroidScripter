@@ -34,6 +34,8 @@ class OverlayManager(private val context: Context) {
     private var params: WindowManager.LayoutParams? = null
     private var overlay: OverlayContainer? = null
 
+    var onDestroyListener: (()->Unit)? = null
+
     @TargetApi(Build.VERSION_CODES.O)
     @SuppressWarnings("ClickableViewAccessibility")
     fun showOverlay() {
@@ -65,15 +67,24 @@ class OverlayManager(private val context: Context) {
         expander.setOnClickListener {
             if (this.overlay != null) {
                 val details = overlayRoot.findViewById<View>(R.id.overlay_details_all)
-                details.visibility = when(details.visibility) {
-                    View.VISIBLE -> View.GONE
-                    else -> View.VISIBLE
-                }
+                val closeButton = overlayRoot.findViewById<View>(R.id.overlay_close_button)
+                val visibility = when(details.visibility) {
+                        View.VISIBLE -> View.GONE
+                        else -> View.VISIBLE
+                    }
+                details.visibility = visibility
+                closeButton.visibility = visibility
                 expander.rotation = when(details.visibility) {
                     View.VISIBLE -> 90f
                     else -> -90f
                 }
             }
+        }
+
+        val closeButton = overlayRoot.findViewById<View>(R.id.overlay_close_button)
+        closeButton.setOnClickListener {
+            destroy()
+            onDestroyListener?.let { it1 -> it1() }
         }
 
         overlay.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{

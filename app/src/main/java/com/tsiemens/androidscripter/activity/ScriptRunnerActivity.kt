@@ -91,6 +91,11 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
             enableOverlay(checked)
         }
 
+        overlayManager.onDestroyListener = {
+            showOverlayCheck.isChecked = false
+            doPreDestroyOverlayCleanup()
+        }
+
         if (scriptKey.type == ScriptType.user) {
             loadUserScript()
         }
@@ -217,11 +222,15 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
     }
 
-    private fun stopOverlay() {
+    private fun doPreDestroyOverlayCleanup() {
         if (overlayScriptControllerUIHelper != null) {
             scriptUIControllers.helpers.remove(overlayScriptControllerUIHelper!!)
             overlayScriptControllerUIHelper = null
         }
+    }
+
+    private fun stopOverlay() {
+        doPreDestroyOverlayCleanup()
         overlayManager.destroy()
     }
 
