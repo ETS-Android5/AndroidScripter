@@ -6,57 +6,100 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         app:cardCornerRadius="10dp"
         app:cardElevation="10dp"
+        android:backgroundTint="@color/cardBackground"
         >
 
-    <LinearLayout
+    <android.support.constraint.ConstraintLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="5dp"
             tools:ignore="UselessParent">
-        <android.support.constraint.ConstraintLayout
-                xmlns:app="http://schemas.android.com/apk/res-auto"
+
+        <ImageView
+                android:id="@+id/overlay_expand"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:scaleX=".8"
+                android:scaleY=".8"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/ic_expand_more_black_48dp"
+                android:rotation="-90"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Expand/Collapse"/>
+
+        <ImageView
+                android:id="@+id/overlay_handle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:src="@drawable/ic_drag_handle_black_48dp"
+                android:rotation="90"
+                app:layout_constraintBottom_toTopOf="@id/script_control_button_panel"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/overlay_expand"
+                app:layout_constraintVertical_bias="0.5"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Drag Handle"/>
+
+        <LinearLayout
+                android:id="@+id/script_control_button_panel"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="5dp"
-                tools:ignore="UselessParent">
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintVertical_bias="0.0"
+                >
 
-            <TextView
-                    android:id="@+id/overlay_expand"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintVertical_bias="0.0"
-                    android:textSize="13pt"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:text=">"/>
-            <TextView
-                    android:id="@+id/overlay_handle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/overlay_expand"
-                    app:layout_constraintVertical_bias="0.5"
-                    android:textSize="13pt"
-                    android:textColor="#000000"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:text="|||"/>
+            <android.support.v7.widget.AppCompatImageButton
+                    android:id="@+id/start_pause_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:scaleType="fitCenter"
+                    android:backgroundTint="@color/cardBackground"
+                    android:padding="0dp"
+                    android:src="@drawable/ic_play_arrow_black_48dp"
+                    />
 
-        </android.support.constraint.ConstraintLayout>
+            <android.support.v7.widget.AppCompatImageButton
+                    android:id="@+id/stop_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:scaleType="fitCenter"
+                    android:backgroundTint="@color/cardBackground"
+                    android:padding="0dp"
+                    android:src="@drawable/ic_stop_black_48dp"
+                    />
+
+            <android.support.v7.widget.AppCompatImageButton
+                    android:id="@+id/restart_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:scaleType="fitCenter"
+                    android:backgroundTint="@color/cardBackground"
+                    android:padding="0dp"
+                    android:src="@drawable/ic_replay_black_48dp"
+                    />
+
+        </LinearLayout>
 
         <RelativeLayout
                 android:id="@+id/overlay_details_all"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@id/overlay_handle"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 >
 
             <View
@@ -131,7 +174,8 @@
                                     android:id="@+id/log_tv"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:textSize="12dp" />
+                                    android:maxWidth="400dp"
+                                    android:textSize="12dp"/>
 
                         </ScrollView>
                     </LinearLayout>
@@ -180,19 +224,20 @@
 
             </RelativeLayout>
 
-            <TextView
+            <ImageView
                     android:id="@+id/overlay_sizing_handle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:src="@drawable/ic_drag_handle_black_48dp"
+                    android:rotation="-45"
                     android:layout_alignEnd="@id/overlay_details_and_grower"
                     android:layout_alignBottom="@id/overlay_details_and_grower"
-                    android:textSize="13pt"
-                    android:textColor="#000000"
                     android:clickable="true"
                     android:focusable="true"
-                    android:text="//"/>
+                    android:contentDescription="Resize Handle" />
 
         </RelativeLayout>
 
-    </LinearLayout>
+    </android.support.constraint.ConstraintLayout>
+
 </android.support.v7.widget.CardView>

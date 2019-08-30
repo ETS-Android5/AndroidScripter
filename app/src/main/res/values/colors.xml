@@ -5,4 +5,5 @@
     <color name="colorAccent">#D81B60</color>
 
     <color name="dividerLine">#28000000</color>
+    <color name="cardBackground">#FFFFFF</color>
 </resources>

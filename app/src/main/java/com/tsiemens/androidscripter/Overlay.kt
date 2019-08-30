@@ -59,15 +59,19 @@ class OverlayManager(private val context: Context) {
         wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         wm!!.addView(overlayRoot, params)
 
-        val handle = overlayRoot.findViewById<TextView>(R.id.overlay_handle)
+        val handle = overlayRoot.findViewById<View>(R.id.overlay_handle)
 
-        val expander = overlayRoot.findViewById<TextView>(R.id.overlay_expand)
+        val expander = overlayRoot.findViewById<View>(R.id.overlay_expand)
         expander.setOnClickListener {
             if (this.overlay != null) {
                 val details = overlayRoot.findViewById<View>(R.id.overlay_details_all)
                 details.visibility = when(details.visibility) {
                     View.VISIBLE -> View.GONE
                     else -> View.VISIBLE
+                }
+                expander.rotation = when(details.visibility) {
+                    View.VISIBLE -> 90f
+                    else -> -90f
                 }
             }
         }
