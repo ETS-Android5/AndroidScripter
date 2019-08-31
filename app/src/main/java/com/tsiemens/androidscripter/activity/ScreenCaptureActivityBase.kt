@@ -70,6 +70,8 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     private var imageReader: ImageReader? = null
     private var looperHandler = Handler(Looper.getMainLooper())
 
+    var projecting = false
+
     // VirtualDisplay properties
     private var vDisplayHeight = 0
     private var vDisplayWidth = 0
@@ -171,6 +173,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
 
     fun startProjection() {
         Log.i(TAG, "startProjection")
+        projecting = true
         startActivityForResult(projectionManager!!.createScreenCaptureIntent(),
             SCREENCAP_REQUEST_CODE
         )
@@ -178,6 +181,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
 
     fun stopProjection() {
         Log.i(TAG, "stopProjection")
+        projecting = false
         looperHandler.post { projection?.stop() }
     }
 

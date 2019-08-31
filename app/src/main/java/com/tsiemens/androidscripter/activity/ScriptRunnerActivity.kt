@@ -24,7 +24,6 @@ import java.util.concurrent.locks.ReentrantLock
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     ScriptApi.LogChangeListener, ScriptApi.ScreenProvider {
 
-    // Set here for testing only
     val overlayManager = OverlayManager(this)
 
     lateinit var tessHelper: TesseractHelper
@@ -52,6 +51,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     var overlayScriptControllerUIHelper: ScriptControllerUIHelper? = null
     val scriptUIControllers = ScriptControllerUIHelperColl()
     lateinit var scriptController: ScriptController
+
+    var restartingScript = false
 
     companion object {
         val INTENT_EXTRA_SCRIPT_KEY = "script_key"
@@ -104,11 +105,11 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         scriptController = object : ScriptController {
             override fun onPausePressed() {
-                setPaused(true)
+                this@ScriptRunnerActivity.onPauseButton()
             }
 
             override fun onRestartPressed() {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                this@ScriptRunnerActivity.onRestartButton()
             }
 
             override fun getScriptState(): ScriptState {
@@ -310,14 +311,16 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     }
 
-    fun onStartButton() {
+    fun startScript() {
         if (scriptThread != null) {
             setPaused(false)
         } else if (script == null && scriptCode != null) {
             try {
                 scriptApi.paused.set(false)
                 script = Script(this, scriptFile.key.toString(), scriptCode!!)
-                startProjection()
+                if (!projecting) {
+                    startProjection()
+                }
 
                 scriptThread = Thread(
                     Runnable {
@@ -332,20 +335,34 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
     }
 
+    fun onStartButton() {
+        startScript()
+    }
+
     fun onPauseButton() {
        setPaused(true)
     }
 
     fun onStopButton() {
         scriptThread?.interrupt()
-        onScriptEnded()
     }
 
+    fun onRestartButton() {
+        restartingScript = true
+        scriptThread?.interrupt()
+    }
+
+    /** Callback from script runner, when script completes */
     fun onScriptEnded() {
-        stopProjection()
         scriptThread = null
         script = null
         scriptApi.paused.set(false)
+        if (restartingScript) {
+            restartingScript = false
+            startScript()
+        } else {
+            stopProjection()
+        }
         scriptUIControllers.notifyScriptStateChanged()
     }
 
