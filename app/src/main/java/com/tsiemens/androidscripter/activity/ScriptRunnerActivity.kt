@@ -3,7 +3,7 @@ package com.tsiemens.androidscripter.activity
 import android.graphics.Bitmap
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
+import android.support.v7.widget.AppCompatImageButton
 import android.support.v7.widget.Toolbar
 import android.util.Log
 import android.view.View
@@ -17,9 +17,9 @@ import com.tsiemens.androidscripter.storage.*
 import com.tsiemens.androidscripter.widget.ScriptController
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelperColl
+import com.tsiemens.androidscripter.widget.ScriptState
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.ReentrantLock
-
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     ScriptApi.LogChangeListener, ScriptApi.ScreenProvider {
@@ -81,9 +81,11 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         logTv = findViewById(R.id.log_tv)
 
-        val startButton = findViewById<Button>(R.id.start_button)
+        val startPauseButton = findViewById<AppCompatImageButton>(R.id.start_pause_button)
 
-        val stopButton = findViewById<Button>(R.id.stop_button)
+        val restartButton = findViewById<AppCompatImageButton>(R.id.restart_button)
+
+        val stopButton = findViewById<AppCompatImageButton>(R.id.stop_button)
 
         showOverlayCheck = findViewById(R.id.show_overlay_checkbox)
         showOverlayCheck.isChecked = false
@@ -101,6 +103,20 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
 
         scriptController = object : ScriptController {
+            override fun onPausePressed() {
+                setPaused(true)
+            }
+
+            override fun onRestartPressed() {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
+            override fun getScriptState(): ScriptState {
+                if (scriptThread == null) {
+                    return ScriptState.stopped
+                }
+                return if (scriptApi.paused.get()) ScriptState.paused else ScriptState.running
+            }
 
             override fun onStartPressed() {
                 this@ScriptRunnerActivity.onStartButton()
@@ -122,7 +138,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         val logScrollView = findViewById<ScrollView>(R.id.log_scrollview)
 
         scriptUIControllers.helpers.add(
-            ScriptControllerUIHelper(startButton, stopButton, logTv, logScrollView, scriptController) )
+            ScriptControllerUIHelper(
+                startPauseButton, stopButton, restartButton,
+                logTv, logScrollView, scriptController) )
 
         screenCapClient = object : ScreenCaptureClient() {
                 override fun onScreenCap(bm: Bitmap) {
@@ -164,7 +182,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                     scriptStorage.putUserScriptCode(scriptFile as UserScriptFile,
                                                     scriptCode!!)
                     script = null
-                    scriptUIControllers.notifyScriptRunnabilityStateChanged()
+                    scriptUIControllers.notifyScriptStateChanged()
                     Toast.makeText(this@ScriptRunnerActivity,
                         "Script loaded", Toast.LENGTH_SHORT).show()
                 } else {
@@ -284,9 +302,20 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         dialog.show(supportFragmentManager, "Edit script dialog")
     }
 
+    private fun setPaused(pause: Boolean) {
+        val oldVal = scriptApi.paused.getAndSet(pause)
+        if (oldVal != pause) {
+            scriptUIControllers.notifyScriptStateChanged()
+        }
+
+    }
+
     fun onStartButton() {
-        if (script == null && scriptCode != null) {
+        if (scriptThread != null) {
+            setPaused(false)
+        } else if (script == null && scriptCode != null) {
             try {
+                scriptApi.paused.set(false)
                 script = Script(this, scriptFile.key.toString(), scriptCode!!)
                 startProjection()
 
@@ -295,12 +324,16 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                         script?.run(scriptApi)
                         onScriptEnded()
                     })
-                scriptUIControllers.notifyScriptRunnabilityStateChanged()
+                scriptUIControllers.notifyScriptStateChanged()
                 scriptThread!!.start()
             } catch (e: PyException) {
                 onLogChanged(ScriptApi.LogEntry("ERROR: ${e.message}"))
             }
         }
+    }
+
+    fun onPauseButton() {
+       setPaused(true)
     }
 
     fun onStopButton() {
@@ -312,7 +345,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         stopProjection()
         scriptThread = null
         script = null
-        scriptUIControllers.notifyScriptRunnabilityStateChanged()
+        scriptApi.paused.set(false)
+        scriptUIControllers.notifyScriptStateChanged()
     }
 
     // From LogChangeListener

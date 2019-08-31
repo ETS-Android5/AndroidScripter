@@ -62,31 +62,19 @@
 
             <android.support.v7.widget.AppCompatImageButton
                     android:id="@+id/start_pause_button"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:scaleType="fitCenter"
-                    android:backgroundTint="@color/cardBackground"
-                    android:padding="0dp"
+                    style="@style/ScriptControlButtonStyle"
                     android:src="@drawable/ic_play_arrow_black_48dp"
                     />
 
             <android.support.v7.widget.AppCompatImageButton
                     android:id="@+id/stop_button"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:scaleType="fitCenter"
-                    android:backgroundTint="@color/cardBackground"
-                    android:padding="0dp"
+                    style="@style/ScriptControlButtonStyle"
                     android:src="@drawable/ic_stop_black_48dp"
                     />
 
             <android.support.v7.widget.AppCompatImageButton
                     android:id="@+id/restart_button"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:scaleType="fitCenter"
-                    android:backgroundTint="@color/cardBackground"
-                    android:padding="0dp"
+                    style="@style/ScriptControlButtonStyle"
                     android:src="@drawable/ic_replay_black_48dp"
                     />
 
@@ -96,8 +84,8 @@
                 android:id="@+id/overlay_close_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:scaleX=".8"
-                android:scaleY=".8"
+                android:scaleX=".5"
+                android:scaleY=".5"
                 android:scaleType="fitCenter"
                 android:backgroundTint="@color/cardBackground"
                 android:visibility="gone"
@@ -153,31 +141,12 @@
                             android:entries="@array/overlay_displays"/>
 
                     <!-- Different detail panels -->
-                    <!-- Log and script control -->
+                    <!-- Log -->
                     <LinearLayout
                             android:id="@+id/overlay_log_panel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="vertical">
-                        <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-                            <Button
-                                    android:id="@+id/overlay_script_start_button"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    style="?android:attr/buttonBarButtonStyle"
-                                    android:text="@string/start"
-                                    android:textSize="5pt"/>
-                            <Button
-                                    android:id="@+id/overlay_script_stop_button"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    style="?android:attr/buttonBarButtonStyle"
-                                    android:text="@string/stop"
-                                    android:textSize="5pt"/>
-                        </LinearLayout>
 
                         <TextView
                                 android:layout_width="wrap_content"

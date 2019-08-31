@@ -18,7 +18,7 @@ class ScriptApi(val ctx: Context,
                 val logChangeListener: LogChangeListener?,
                 val screenProvider: ScreenProvider?) {
     val logLock = ReentrantReadWriteLock()
-    val interrupted = AtomicBoolean(false)
+    val paused = AtomicBoolean(false)
 
     val serviceClient = ServiceBcastClient(ctx)
 
@@ -63,14 +63,32 @@ class ScriptApi(val ctx: Context,
         }
     }
 
+    private fun maybePauseThread() {
+        if (paused.get()) {
+            Log.i(TAG, "Pausing thread")
+            logInternal("SCRIPT PAUSED")
+            while (paused.get()) {
+                Thread.sleep(1000)
+                maybeEndThread()
+            }
+            Log.i(TAG, "Resuming thread")
+            logInternal("SCRIPT RESUMED")
+        }
+    }
+
+    private fun handlePendingSignals() {
+        maybeEndThread()
+        maybePauseThread()
+    }
+
     // This should be used as a backup from foregroundWindowState
     fun foregroundActivityPackage(): String? {
-        maybeEndThread()
+        handlePendingSignals()
         return getUsageStatsForegroundActivityName(ctx)
     }
 
     fun foregroundWindowState(): WindowState? {
-        maybeEndThread()
+        handlePendingSignals()
         return ScriptService2.currWindowState
     }
 
@@ -96,14 +114,14 @@ class ScriptApi(val ctx: Context,
 
     fun log(str: String) {
         logInternal(str)
-        maybeEndThread()
+        handlePendingSignals()
     }
 
     fun sleep(seconds: Float) {
         var remainingMillis = (seconds * 1000).toLong()
         val interval: Long = 1000
         while (remainingMillis > 0) {
-            maybeEndThread()
+            handlePendingSignals()
             val nextSleep = min(interval, remainingMillis)
             Thread.sleep(nextSleep)
             remainingMillis -= nextSleep
