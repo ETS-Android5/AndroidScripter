@@ -39,6 +39,9 @@ class ScriptControllerUIHelper(val startPauseButton: AppCompatImageButton,
 
     companion object {
         val TAG = ScriptControllerUIHelper::class.java.simpleName
+
+        private val MAX_LOG_SIZE_CHARS = 80 * 200 // Around 80 chars per line
+        private val LOG_TRIM_TO_CHARS = 80 * 100 // Around 80 chars per line
     }
 
     init {
@@ -64,7 +67,7 @@ class ScriptControllerUIHelper(val startPauseButton: AppCompatImageButton,
         stopButton.isEnabled = scriptState != ScriptState.stopped
         restartButton.isEnabled = runnable && scriptState != ScriptState.stopped
 
-        Log.d(TAG, "notifyScriptChanged. state: ${controller.getScriptState()}")
+        Log.d(TAG, "notifyScriptChanged: state: ${controller.getScriptState()}")
         startPauseButton.setImageResource(when(controller.getScriptState()) {
             ScriptState.running -> R.drawable.ic_pause_black_48dp
             ScriptState.paused, ScriptState.stopped -> R.drawable.ic_play_arrow_black_48dp
@@ -73,6 +76,12 @@ class ScriptControllerUIHelper(val startPauseButton: AppCompatImageButton,
 
     fun onLog(newLog: ScriptApi.LogEntry) {
         logText.append(newLog.toString() + "\n")
+        val nChars = logText.length()
+        if (nChars > MAX_LOG_SIZE_CHARS) {
+            val nCharsToDrop = nChars - LOG_TRIM_TO_CHARS
+            logText.text = logText.text.drop(nCharsToDrop)
+            Log.i(TAG, "Dropped $nCharsToDrop characters from log")
+        }
     }
 
     private fun scrollLogToBottom() {
