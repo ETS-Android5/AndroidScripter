@@ -9,6 +9,9 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.ScriptApi
+import android.content.Context
+import com.tsiemens.androidscripter.util.DrawableUtil
+
 
 enum class ScriptState {
     running,
@@ -29,7 +32,8 @@ interface ScriptController {
     fun scriptIsRunnable(): Boolean
 }
 
-class ScriptControllerUIHelper(val startPauseButton: AppCompatImageButton,
+class ScriptControllerUIHelper(val context: Context,
+                               val startPauseButton: AppCompatImageButton,
                                val stopButton: AppCompatImageButton,
                                val restartButton: AppCompatImageButton,
                                val logText: TextView,
@@ -59,18 +63,25 @@ class ScriptControllerUIHelper(val startPauseButton: AppCompatImageButton,
         notifyScriptStateChanged()
     }
 
+    fun setButtonEnabled(i: AppCompatImageButton, enable: Boolean, res: Int) {
+        i.isEnabled = enable
+        val originalIcon = context.resources.getDrawable(res, null)
+        val icon = if (enable) originalIcon else DrawableUtil.convertDrawableToGrayScale(originalIcon)
+        i.setImageDrawable(icon)
+    }
+
     fun notifyScriptStateChanged() {
+        Log.d(TAG, "notifyScriptChanged: state: ${controller.getScriptState()}")
+        val startPauseImgRes = when(controller.getScriptState()) {
+                ScriptState.running -> R.drawable.ic_pause_black_48dp
+                ScriptState.paused, ScriptState.stopped -> R.drawable.ic_play_arrow_black_48dp
+            }
+
         val scriptState = controller.getScriptState()
         val runnable = controller.scriptIsRunnable()
-        startPauseButton.isEnabled = runnable
-        stopButton.isEnabled = scriptState != ScriptState.stopped
-        restartButton.isEnabled = runnable && scriptState != ScriptState.stopped
-
-        Log.d(TAG, "notifyScriptChanged: state: ${controller.getScriptState()}")
-        startPauseButton.setImageResource(when(controller.getScriptState()) {
-            ScriptState.running -> R.drawable.ic_pause_black_48dp
-            ScriptState.paused, ScriptState.stopped -> R.drawable.ic_play_arrow_black_48dp
-        })
+        setButtonEnabled(startPauseButton, runnable, startPauseImgRes)
+        setButtonEnabled(stopButton, scriptState != ScriptState.stopped, R.drawable.ic_stop_black_48dp)
+        setButtonEnabled(restartButton, runnable && scriptState != ScriptState.stopped, R.drawable.ic_replay_black_48dp)
     }
 
     fun onLog(newLog: ScriptApi.LogEntry) {

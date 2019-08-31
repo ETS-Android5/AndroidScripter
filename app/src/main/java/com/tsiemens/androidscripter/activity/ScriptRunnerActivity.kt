@@ -139,7 +139,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         val logScrollView = findViewById<ScrollView>(R.id.log_scrollview)
 
         scriptUIControllers.helpers.add(
-            ScriptControllerUIHelper(
+            ScriptControllerUIHelper(this,
                 startPauseButton, stopButton, restartButton,
                 logTv, logScrollView, scriptController) )
 

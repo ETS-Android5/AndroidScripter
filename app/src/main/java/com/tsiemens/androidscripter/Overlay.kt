@@ -166,6 +166,7 @@ class OverlayManager(private val context: Context) {
 
     fun createScriptControllerUIHelper(controller: ScriptController): ScriptControllerUIHelper {
         return ScriptControllerUIHelper(
+            context,
             overlay!!.root.findViewById(R.id.start_pause_button),
             overlay!!.root.findViewById(R.id.stop_button),
             overlay!!.root.findViewById(R.id.restart_button),
