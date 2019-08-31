@@ -5,7 +5,6 @@ import android.os.Looper
 import android.support.v7.widget.AppCompatImageButton
 import android.util.Log
 import android.view.View
-import android.widget.Button
 import android.widget.ScrollView
 import android.widget.TextView
 import com.tsiemens.androidscripter.R

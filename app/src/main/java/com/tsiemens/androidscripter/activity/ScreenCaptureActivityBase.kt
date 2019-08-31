@@ -15,6 +15,7 @@ import android.media.ImageReader
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import com.tsiemens.androidscripter.util.NTObjPtr
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
@@ -22,8 +23,17 @@ class DisplayImage(val image: Image,
                    val width: Int,
                    val height: Int) {
 
-    private val refLock = ReentrantReadWriteLock()
-    private var ref = 1
+    companion object {
+        val MAX_OPEN_IMAGES = 3
+        private val openImagesLock = ReentrantReadWriteLock()
+        var openImages = 0
+    }
+
+    init {
+        openImagesLock.write {
+            openImages++
+        }
+    }
 
     fun toBitmap(): Bitmap {
         val planes = image.getPlanes()
@@ -44,26 +54,12 @@ class DisplayImage(val image: Image,
 
     fun close() {
         image.close()
-    }
-
-    fun takeRef(): DisplayImage? {
-        refLock.write {
-            if (ref == 0) {
-                return null
-            }
-            ref++
+        var openImagesNow: Int = 0
+        openImagesLock.write {
+            openImages--
+            openImagesNow = openImages
         }
-        return this
-    }
-
-    fun releaseRef() {
-        refLock.write {
-            ref--
-            if (ref == 0) {
-                Log.d("DisplayImage", "Closing image")
-                image.close()
-            }
-        }
+        Log.i("DisplayImage", "Closed image. Open now: $openImagesNow")
     }
 }
 
@@ -78,7 +74,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     private var vDisplayHeight = 0
     private var vDisplayWidth = 0
 
-    private var lastImg: DisplayImage? = null
+    private var lastImgPtr = NTObjPtr<DisplayImage>()
 
     companion object {
         private val TAG = ScreenCaptureActivityBase::class.java.simpleName
@@ -105,15 +101,12 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
         }
 
         fun requestScreenCap() {
-            val lastImg = activity?.lastImg?.takeRef()
-            try {
+            activity?.lastImgPtr?.trackFor { lastImg ->
                 if (lastImg != null) {
                     replyToReqeust(lastImg.toBitmap())
                 } else {
                     requestPending = true
                 }
-            } finally {
-                lastImg?.releaseRef()
             }
         }
     }
@@ -156,7 +149,8 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
                 // For some reason, the format is supposed to be 1, even though no constant in ImageFormat
                 // has this value. Unsure why at this point.
                 // Demo was using JPEG, but this caused a crash when getPlanes was called.
-                imageReader = ImageReader.newInstance(vDisplayWidth, vDisplayHeight, 1, 3)
+                imageReader = ImageReader.newInstance(vDisplayWidth, vDisplayHeight, 1,
+                    DisplayImage.MAX_OPEN_IMAGES)
                 projection!!.createVirtualDisplay(
                     "screencap",
                     vDisplayWidth,
@@ -190,7 +184,11 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     // from OnImageAvailableListener
     override fun onImageAvailable(p0: ImageReader?) {
         Log.d(TAG, "onImageAvailable")
-        // This MUST be released before we return
+        val openImages = DisplayImage.openImages
+        if (openImages >= DisplayImage.MAX_OPEN_IMAGES) {
+            Log.w(TAG, "Open images $openImages at max.")
+            return
+        }
         val image: Image? = imageReader!!.acquireLatestImage()
         try {
             val clientRef = client
@@ -198,8 +196,8 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
             if (image != null) {
                 val displayImg =
                     DisplayImage(image, vDisplayWidth, vDisplayHeight)
-                lastImg?.releaseRef()
-                lastImg = displayImg
+
+                lastImgPtr.track(displayImg) { i -> i.close() }
 
                 if (clientRef?.isRequestPending() == true) {
                     Log.d(TAG, "onImageAvailable: serving request")
@@ -211,8 +209,6 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
             }
         } catch (e: Exception) {
             Log.e(TAG, Log.getStackTraceString(e))
-        } finally {
-//            image?.close()
         }
     }
 
