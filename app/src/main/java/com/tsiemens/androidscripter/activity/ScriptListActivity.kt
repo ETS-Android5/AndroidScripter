@@ -90,6 +90,10 @@ class ScriptListActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
             R.id.action_settings -> true
+            R.id.action_launch_screen_cap_debug_activity -> {
+                startActivity(Intent(this, ScreenCaptureImageActivity::class.java))
+                true
+            }
             R.id.action_launch_prototype_activity -> {
                 startActivity(Intent(this, MainActivity::class.java))
                 true

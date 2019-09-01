@@ -60,6 +60,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         private val TAG = ScriptRunnerActivity::class.java.simpleName
         private val PREPARE_TESS_PERMISSION_REQUEST_CODE =
             MIN_REQUEST_CODE
+
+        val globalThreadList = arrayListOf<Thread>()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -311,7 +313,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     }
 
-    fun startScript() {
+    private fun startScript() {
         if (scriptThread != null) {
             setPaused(false)
         } else if (script == null && scriptCode != null) {
@@ -327,6 +329,11 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                         script?.run(scriptApi)
                         onScriptEnded()
                     })
+
+                if (!globalThreadList.isEmpty()) {
+                    Log.e(TAG, "startScript: Thread list is not empty!")
+                }
+                globalThreadList.add(scriptThread!!)
                 scriptUIControllers.notifyScriptStateChanged()
                 scriptThread!!.start()
             } catch (e: PyException) {
@@ -343,8 +350,16 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
        setPaused(true)
     }
 
-    fun onStopButton() {
+    fun stopThread() {
         scriptThread?.interrupt()
+        scriptThread?.apply {
+            globalThreadList.remove(this)
+        }
+        scriptThread = null
+    }
+
+    fun onStopButton() {
+        stopThread()
     }
 
     fun onRestartButton() {
@@ -354,6 +369,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     /** Callback from script runner, when script completes */
     fun onScriptEnded() {
+        scriptThread?.apply {
+            globalThreadList.remove(this)
+        }
         scriptThread = null
         script = null
         scriptApi.paused.set(false)

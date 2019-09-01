@@ -23,7 +23,8 @@ class Script(context: Context, modName: String, scriptCode: String) {
         try {
             val pyApiMod = Python.getInstance().getModule("androidscripter.api")
             val pyApi = pyApiMod.callAttr("newApi", api)
-            module.callAttr("run", pyApi)
+            val pyRunner = Python.getInstance().getModule("androidscripter.runner")
+            pyRunner.callAttr("run_script", pyApi, module)
             api.logInternal("SCRIPT EXITED")
         } catch (e: PyException) {
             if (e.cause?.javaClass == InterruptedException::class.java) {

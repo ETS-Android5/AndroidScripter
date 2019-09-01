@@ -8,6 +8,11 @@
           android:orderInCategory="100"
           app:showAsAction="never"/>
 
+    <item android:id="@+id/action_launch_screen_cap_debug_activity"
+            android:title="Screencap Debug Activity"
+            android:orderInCategory="100"
+            app:showAsAction="never"/>
+
     <item android:id="@+id/action_launch_prototype_activity"
             android:title="Prototype Activity"
             android:orderInCategory="100"

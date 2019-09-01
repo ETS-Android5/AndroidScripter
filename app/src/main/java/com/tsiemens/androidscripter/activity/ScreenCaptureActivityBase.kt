@@ -15,18 +15,24 @@ import android.media.ImageReader
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import com.tsiemens.androidscripter.util.BitmapUtil
 import com.tsiemens.androidscripter.util.NTObjPtr
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
 class DisplayImage(val image: Image,
                    val width: Int,
-                   val height: Int) {
+                   val height: Int,
+                   val deviceSide1: Int,
+                   val deviceSide2: Int,
+                   val rotation: Int) {
 
     companion object {
         val MAX_OPEN_IMAGES = 3
         private val openImagesLock = ReentrantReadWriteLock()
         var openImages = 0
+
+        val TAG = DisplayImage::class.java.simpleName
     }
 
     init {
@@ -45,11 +51,15 @@ class DisplayImage(val image: Image,
         val rowPaddingBytes = rowStride - (pixStride * width)
 
         // create bitmap
-        val bitmap = Bitmap.createBitmap(
+        var bitmap = Bitmap.createBitmap(
             width + (rowPaddingBytes/pixStride), height, Bitmap.Config.ARGB_8888)
         bitmap!!.copyPixelsFromBuffer(imageBuffer)
         // Trim off padding
-        return Bitmap.createBitmap(bitmap, 0, 0, width,  height)
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, width,  height)
+        bitmap = BitmapUtil.cropScreenshotFromSquareScreenshot(bitmap, deviceSide1, deviceSide2, rotation)
+        Log.d(TAG, "toBitmap: w: ${bitmap.width}, h: ${bitmap.height}")
+
+        return bitmap
     }
 
     fun close() {
@@ -75,6 +85,9 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     // VirtualDisplay properties
     private var vDisplayHeight = 0
     private var vDisplayWidth = 0
+
+    private var imgReaderHeight = 0
+    private var imgReaderWidth = 0
 
     private var lastImgPtr = NTObjPtr<DisplayImage>()
 
@@ -144,19 +157,25 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
                 val display = windowManager.defaultDisplay
                 val size = Point()
                 display.getSize(size)
+
                 vDisplayWidth = size.x
                 vDisplayHeight = size.y
+
+                // Take a square image, so that we don't scale down when the screen is in a different
+                // rotation.
+                imgReaderWidth = kotlin.math.max(size.x, size.y)
+                imgReaderHeight = kotlin.math.max(size.x, size.y)
 
                 Log.i(TAG, "Create virtual display")
                 // For some reason, the format is supposed to be 1, even though no constant in ImageFormat
                 // has this value. Unsure why at this point.
                 // Demo was using JPEG, but this caused a crash when getPlanes was called.
-                imageReader = ImageReader.newInstance(vDisplayWidth, vDisplayHeight, 1,
+                imageReader = ImageReader.newInstance(imgReaderWidth, imgReaderHeight, 1,
                     DisplayImage.MAX_OPEN_IMAGES)
                 projection!!.createVirtualDisplay(
                     "screencap",
-                    vDisplayWidth,
-                    vDisplayHeight,
+                    imgReaderWidth,
+                    imgReaderHeight,
                     density,
                     flags,
                     imageReader!!.getSurface(),
@@ -198,8 +217,10 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
             val clientRef = client
 
             if (image != null) {
+                val rotation = windowManager.defaultDisplay.rotation
                 val displayImg =
-                    DisplayImage(image, vDisplayWidth, vDisplayHeight)
+                    DisplayImage(image, imgReaderWidth, imgReaderHeight,
+                        vDisplayHeight, vDisplayWidth, rotation)
 
                 lastImgPtr.track(displayImg) { i -> i.close() }
 
