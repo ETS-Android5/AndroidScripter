@@ -20,6 +20,8 @@ import com.tsiemens.androidscripter.widget.ScriptControllerUIHelperColl
 import com.tsiemens.androidscripter.widget.ScriptState
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.write
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     ScriptApi.LogChangeListener, ScriptApi.ScreenProvider {
@@ -61,6 +63,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         private val PREPARE_TESS_PERMISSION_REQUEST_CODE =
             MIN_REQUEST_CODE
 
+        val globalThreadListLock = ReentrantReadWriteLock()
         val globalThreadList = arrayListOf<Thread>()
     }
 
@@ -79,6 +82,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         if (scriptFile.key.type == ScriptType.sample) {
             scriptCode = dataHelper.getAssetUtf8Data((scriptFile as SampleScriptFile).filename)
         }
+
+        validateGlobalThreadListEmpty()
 
         updateScriptDetailsViews()
 
@@ -305,6 +310,22 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         dialog.show(supportFragmentManager, "Edit script dialog")
     }
 
+    private fun validateGlobalThreadListEmpty() {
+        var extraThreadsFound = 0
+        globalThreadListLock.write {
+            if (globalThreadList.isNotEmpty()) {
+                extraThreadsFound = globalThreadList.size
+                for (t in globalThreadList) {
+                    t.interrupt()
+                }
+                globalThreadList.clear()
+            }
+        }
+        if (extraThreadsFound > 0) {
+            Log.e(TAG, "startScript: Thread list is not empty! Found $extraThreadsFound")
+        }
+    }
+
     private fun setPaused(pause: Boolean) {
         val oldVal = scriptApi.paused.getAndSet(pause)
         if (oldVal != pause) {
@@ -330,9 +351,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                         onScriptEnded()
                     })
 
-                if (!globalThreadList.isEmpty()) {
-                    Log.e(TAG, "startScript: Thread list is not empty!")
-                }
+                validateGlobalThreadListEmpty()
                 globalThreadList.add(scriptThread!!)
                 scriptUIControllers.notifyScriptStateChanged()
                 scriptThread!!.start()
@@ -350,11 +369,15 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
        setPaused(true)
     }
 
-    fun stopThread() {
-        scriptThread?.interrupt()
-        scriptThread?.apply {
-            globalThreadList.remove(this)
+    fun stopThreadAndRemoveFromList(tr: Thread) {
+        tr.interrupt()
+        globalThreadListLock.write {
+            globalThreadList.remove(tr)
         }
+    }
+
+    fun stopThread() {
+        scriptThread?.apply { stopThreadAndRemoveFromList(this) }
         scriptThread = null
     }
 

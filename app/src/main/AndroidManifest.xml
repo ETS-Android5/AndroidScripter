@@ -23,7 +23,8 @@
         <activity
                 android:name=".activity.ScriptListActivity"
                 android:label="@string/app_name"
-                android:theme="@style/AppTheme.NoActionBar">
+                android:theme="@style/AppTheme.NoActionBar"
+                android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -34,17 +35,19 @@
         <activity
                 android:name=".activity.MainActivity"
                 android:label="@string/app_name"
-                android:theme="@style/AppTheme.NoActionBar">
-        </activity>
+                android:theme="@style/AppTheme.NoActionBar"
+                android:screenOrientation="portrait" />
 
         <activity
                 android:name=".activity.ScriptRunnerActivity"
                 android:label="@string/app_name"
-                android:theme="@style/AppTheme.NoActionBar" />
+                android:theme="@style/AppTheme.NoActionBar"
+                android:screenOrientation="portrait" />
         <activity
                 android:name=".activity.ScreenCaptureImageActivity"
                 android:label="@string/app_name"
-                android:theme="@style/AppTheme.NoActionBar" />
+                android:theme="@style/AppTheme.NoActionBar"
+                android:screenOrientation="portrait" />
 
         <service
                 android:name=".service.ScriptService2"
