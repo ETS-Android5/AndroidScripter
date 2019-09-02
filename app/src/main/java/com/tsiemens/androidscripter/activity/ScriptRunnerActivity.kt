@@ -14,6 +14,7 @@ import android.widget.*
 import com.chaquo.python.PyException
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.storage.*
+import com.tsiemens.androidscripter.util.UiUtil
 import com.tsiemens.androidscripter.widget.ScriptController
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelperColl
@@ -323,6 +324,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
         if (extraThreadsFound > 0) {
             Log.e(TAG, "startScript: Thread list is not empty! Found $extraThreadsFound")
+            UiUtil.forceToMainThread {
+                Toast.makeText(this, "Found unexpected threads", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

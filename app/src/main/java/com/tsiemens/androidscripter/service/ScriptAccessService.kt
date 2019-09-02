@@ -146,6 +146,8 @@ class ScriptService2 : AccessibilityService() {
                 }
             }
             ServiceBcast.TYPE_PRESS_BACK -> { pressBackButton() }
+            ServiceBcast.TYPE_PRESS_HOME -> { pressHomeButton() }
+            ServiceBcast.TYPE_PRESS_RECENTS -> { pressRecentAppsButton() }
         }
 
         // Send ack
@@ -208,6 +210,14 @@ class ScriptService2 : AccessibilityService() {
         performGlobalAction(GLOBAL_ACTION_BACK)
     }
 
+    fun pressHomeButton() {
+        performGlobalAction(GLOBAL_ACTION_HOME)
+    }
+
+    fun pressRecentAppsButton() {
+        performGlobalAction(GLOBAL_ACTION_RECENTS)
+    }
+
     fun defer(runnable: Runnable, delayMillis: Long) {
         val handler = Handler()
         handler.postDelayed(runnable, delayMillis)
@@ -244,6 +254,8 @@ class ServiceBcast {
         const val TYPE_OCR_SCREENSHOT = "ocrScreenshot"
         const val TYPE_CLICK = "click"
         const val TYPE_PRESS_BACK = "pressBack"
+        const val TYPE_PRESS_HOME = "pressHome"
+        const val TYPE_PRESS_RECENTS = "pressRecents"
     }
 }
 
@@ -276,6 +288,16 @@ class ServiceBcastClient(val context: Context) {
 
     fun pressBack() {
         val outIntent = makeIntent(ServiceBcast.TYPE_PRESS_BACK)
+        LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
+    }
+
+    fun pressHome() {
+        val outIntent = makeIntent(ServiceBcast.TYPE_PRESS_HOME)
+        LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
+    }
+
+    fun pressRecentApps() {
+        val outIntent = makeIntent(ServiceBcast.TYPE_PRESS_RECENTS)
         LocalBroadcastManager.getInstance(context).sendBroadcast(outIntent)
     }
 }

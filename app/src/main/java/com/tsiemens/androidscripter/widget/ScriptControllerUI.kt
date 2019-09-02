@@ -11,6 +11,7 @@ import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.ScriptApi
 import android.content.Context
 import com.tsiemens.androidscripter.util.DrawableUtil
+import com.tsiemens.androidscripter.util.UiUtil.Companion.forceToMainThread
 
 
 enum class ScriptState {
@@ -106,15 +107,6 @@ class ScriptControllerUIHelper(val context: Context,
 
 class ScriptControllerUIHelperColl {
     val helpers = arrayListOf<ScriptControllerUIHelper>()
-
-    private fun forceToMainThread(thing: ()->Unit) {
-        val mainLooper = Looper.getMainLooper()
-        if (mainLooper.thread != Thread.currentThread()) {
-            Handler(mainLooper).post(thing)
-        } else {
-            thing()
-        }
-    }
 
     fun notifyScriptStateChanged() {
         forceToMainThread {

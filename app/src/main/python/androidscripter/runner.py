@@ -6,6 +6,5 @@ def run_script(api, script_module):
         script_module.run(api)
     except Exception as e:
         if not isinstance(e, java.jclass("java.lang.InterruptedException")):
-            api.log(str(type(e)) +" "+ str(dir(e)))
             raise Exception(str(e) + " :\n" + traceback.format_exc())
         raise

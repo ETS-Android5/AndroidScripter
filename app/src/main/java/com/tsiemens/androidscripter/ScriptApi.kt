@@ -104,6 +104,14 @@ class ScriptApi(val ctx: Context,
         serviceClient.pressBack()
     }
 
+    fun pressHome() {
+        serviceClient.pressHome()
+    }
+
+    fun pressRecentApps() {
+        serviceClient.pressRecentApps()
+    }
+
     fun logInternal(str: String) {
         val newLog = LogEntry(str)
         logLock.write {

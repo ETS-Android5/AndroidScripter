@@ -23,5 +23,11 @@ class Api:
     def press_back(self):
         return self._api.pressBack()
 
+    def press_home(self):
+        return self._api.pressHome()
+
+    def press_recent_apps(self):
+        return self._api.pressRecentApps()
+
 def newApi(api):
     return Api(api)
