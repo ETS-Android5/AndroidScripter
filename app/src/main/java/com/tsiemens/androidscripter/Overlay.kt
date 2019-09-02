@@ -110,10 +110,9 @@ class OverlayManager(private val context: Context) {
 
         handle.setOnTouchListener(ViewDragger(params!!, overlayRoot, wm!!))
 
-        val sizeFrame = overlayRoot.findViewById<View>(R.id.overlay_size_grower_frame)
-        val sizeRefView = overlayRoot.findViewById<View>(R.id.overlay_details_and_grower)
+        val sizeFrame = overlayRoot.findViewById<View>(R.id.overlay_details_all)
         val sizeHandle = overlayRoot.findViewById<View>(R.id.overlay_sizing_handle)
-        sizeHandle.setOnTouchListener(ViewResizer(sizeFrame, sizeRefView, wm!!))
+        sizeHandle.setOnTouchListener(ViewResizer(sizeFrame, wm!!))
 
         val screenSize = Point()
         wm!!.defaultDisplay.getSize(screenSize)
@@ -213,7 +212,6 @@ class ViewDragger(val params: WindowManager.LayoutParams,
 }
 
 class ViewResizer(val targetView: View,
-                  val referenceView: View,
                   val wm: WindowManager): View.OnTouchListener {
     companion object {
         val TAG = ViewResizer::class.java.simpleName
@@ -225,9 +223,10 @@ class ViewResizer(val targetView: View,
 
     private fun correctTargetViewSize(): ViewGroup.LayoutParams {
         val params = targetView.layoutParams
-        params.width = max(targetView.width, referenceView.width)
-        params.height = max(targetView.height, referenceView.height)
-//        Log.d(TAG, "correct to ${params.width}, ${params.height}")
+        val parent = targetView.parent as ViewGroup
+        params.width = targetView.width
+
+        params.height = parent.measuredHeight - parent.paddingTop - parent.paddingBottom
         targetView.layoutParams = params
         return params
     }
@@ -241,7 +240,6 @@ class ViewResizer(val targetView: View,
                 heightOnDown = params.height
                 touchX = event.rawX
                 touchY = event.rawY
-//                Log.d(TAG, "DOWN $widthOnDown, $heightOnDown, $touchX, $touchY")
                 return true
             }
             MotionEvent.ACTION_UP -> {
@@ -249,11 +247,9 @@ class ViewResizer(val targetView: View,
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
-//                Log.d(TAG, "MOVE ${event.rawX}, ${event.rawY}")
                 val params = targetView.layoutParams
                 params.width = max(0, (widthOnDown + (event.rawX - touchX)).toInt())
                 params.height = max(0, (heightOnDown + (event.rawY - touchY)).toInt())
-//                Log.d(TAG, "MOVE change to ${params.width}, ${params.height}")
                 targetView.layoutParams = params
                 return true
             }

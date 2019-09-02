@@ -97,14 +97,15 @@
                 app:layout_constraintVertical_bias="0.0"
                 android:contentDescription="Close Overlay" />
 
-        <RelativeLayout
+        <android.support.constraint.ConstraintLayout
                 android:id="@+id/overlay_details_all"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="300dp"
+                android:layout_height="300dp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toRightOf="@id/overlay_handle"
+                app:layout_constraintLeft_toRightOf="@id/script_control_button_panel"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0"
                 >
 
             <View
@@ -115,101 +116,95 @@
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
                     android:layout_alignParentStart="true"
-                    android:layout_alignTop="@id/overlay_details_and_grower"
-                    android:layout_alignBottom="@id/overlay_details_and_grower"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     android:layout_marginEnd="5dp"
                 />
 
-            <RelativeLayout
-                    android:id="@+id/overlay_details_and_grower"
+            <LinearLayout
+                    android:id="@+id/overlay_details"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_toEndOf="@id/divider_line">
+                    android:orientation="vertical"
+                    android:visibility="visible"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toRightOf="@id/divider_line"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintHorizontal_bias="0"
+                    app:layout_constraintVertical_bias="0"
+                    android:padding="5dp">
 
-                <LinearLayout
-                        android:id="@+id/overlay_details"
+                <Spinner
+                        android:id="@+id/overlay_detail_spinner"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="visible"
-                        android:padding="5dp">
+                        android:entries="@array/overlay_displays"/>
 
-                    <Spinner
-                            android:id="@+id/overlay_detail_spinner"
+                <!-- Different detail panels -->
+                <!-- Log -->
+                <LinearLayout
+                        android:id="@+id/overlay_log_panel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
+
+                    <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:entries="@array/overlay_displays"/>
+                            android:text="@string/log"/>
 
-                    <!-- Different detail panels -->
-                    <!-- Log -->
-                    <LinearLayout
-                            android:id="@+id/overlay_log_panel"
+                    <ScrollView
+                            android:id="@+id/log_scrollview"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical">
-
+                            android:layout_height="match_parent">
                         <TextView
+                                android:id="@+id/log_tv"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/log"/>
+                                android:maxWidth="400dp"
+                                android:textSize="12dp"/>
 
-                        <ScrollView
-                                android:id="@+id/log_scrollview"
-                                android:layout_width="wrap_content"
-                                android:layout_height="80dp">
-                            <TextView
-                                    android:id="@+id/log_tv"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:maxWidth="400dp"
-                                    android:textSize="12dp"/>
-
-                        </ScrollView>
-                    </LinearLayout>
-
-                    <!-- OCR -->
-                    <LinearLayout
-                            android:id="@+id/overlay_ocr_panel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical">
-                        <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-                            <Button
-                                    android:id="@+id/overlay_ocr_capture_button"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Capture"
-                                    android:textSize="5pt"/>
-                            <Button
-                                    android:id="@+id/overlay_ocr_clear_button"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Clear"
-                                    android:textSize="5pt"/>
-                        </LinearLayout>
-
-                        <ScrollView
-                                android:layout_width="wrap_content"
-                                android:layout_height="80dp">
-                            <TextView
-                                    android:id="@+id/screen_textview"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:textSize="12dp" />
-
-                        </ScrollView>
-                    </LinearLayout>
+                    </ScrollView>
                 </LinearLayout>
 
-                <FrameLayout
-                        android:id="@+id/overlay_size_grower_frame"
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"/>
+                <!-- OCR -->
+                <LinearLayout
+                        android:id="@+id/overlay_ocr_panel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                        <Button
+                                android:id="@+id/overlay_ocr_capture_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Capture"
+                                android:textSize="5pt"/>
+                        <Button
+                                android:id="@+id/overlay_ocr_clear_button"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Clear"
+                                android:textSize="5pt"/>
+                    </LinearLayout>
 
-            </RelativeLayout>
+                    <ScrollView
+                            android:layout_width="wrap_content"
+                            android:layout_height="80dp">
+                        <TextView
+                                android:id="@+id/screen_textview"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="12dp" />
+
+                    </ScrollView>
+                </LinearLayout>
+            </LinearLayout>
 
             <ImageView
                     android:id="@+id/overlay_sizing_handle"
@@ -217,13 +212,15 @@
                     android:layout_height="30dp"
                     android:src="@drawable/ic_drag_handle_black_48dp"
                     android:rotation="-45"
-                    android:layout_alignEnd="@id/overlay_details_and_grower"
-                    android:layout_alignBottom="@id/overlay_details_and_grower"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true"
                     android:clickable="true"
                     android:focusable="true"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
                     android:contentDescription="Resize Handle"/>
 
-        </RelativeLayout>
+        </android.support.constraint.ConstraintLayout>
 
     </android.support.constraint.ConstraintLayout>
 
