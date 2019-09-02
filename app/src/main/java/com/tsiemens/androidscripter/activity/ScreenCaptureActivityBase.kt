@@ -21,6 +21,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
 class DisplayImage(val image: Image,
+                   val imgId: Long,
                    val width: Int,
                    val height: Int,
                    val deviceSide1: Int,
@@ -97,17 +98,19 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
 
         // For child class use
         val MIN_REQUEST_CODE = 101
+
+        private var nextImageId: Long = 1
     }
 
     abstract inner class ScreenCaptureClient {
         var activity: ScreenCaptureActivityBase? = null
         private var requestPending = false
 
-        protected abstract fun onScreenCap(bm: Bitmap)
+        protected abstract fun onScreenCap(bm: Bitmap, imgId: Long)
 
-        open fun replyToReqeust(bm: Bitmap) {
+        open fun replyToReqeust(bm: Bitmap, imgId: Long) {
             requestPending = false
-            onScreenCap(bm)
+            onScreenCap(bm, imgId)
         }
 
         open fun isRequestPending(): Boolean {
@@ -118,7 +121,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
         fun requestScreenCap() {
             activity?.lastImgPtr?.trackFor { lastImg ->
                 if (lastImg != null) {
-                    replyToReqeust(lastImg.toBitmap())
+                    replyToReqeust(lastImg.toBitmap(), lastImg.imgId)
                 } else {
                     requestPending = true
                 }
@@ -219,8 +222,9 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
             if (image != null) {
                 val rotation = windowManager.defaultDisplay.rotation
                 val displayImg =
-                    DisplayImage(image, imgReaderWidth, imgReaderHeight,
+                    DisplayImage(image, nextImageId, imgReaderWidth, imgReaderHeight,
                         vDisplayHeight, vDisplayWidth, rotation)
+                nextImageId++
 
                 lastImgPtr.track(displayImg) { i -> i.close() }
 
@@ -228,7 +232,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
                     Log.d(TAG, "onImageAvailable: serving request")
 
                     // This is passed on, so don't recycle the bitmap
-                    clientRef.replyToReqeust(displayImg.toBitmap())
+                    clientRef.replyToReqeust(displayImg.toBitmap(), displayImg.imgId)
                 }
 
             }

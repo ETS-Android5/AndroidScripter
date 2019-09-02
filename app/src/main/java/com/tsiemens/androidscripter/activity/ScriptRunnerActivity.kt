@@ -48,6 +48,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     lateinit var showOverlayCheck: CheckBox
 
     var lastScreencap: Bitmap? = null
+    var lastScreencapId: Long = 0
+    var lastRetrievedScreencapId: Long = 0
     val screenCapLatchLock = ReentrantLock()
     var screenCapLatch: CountDownLatch? = null
 
@@ -152,9 +154,10 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                 logTv, logScrollView, scriptController) )
 
         screenCapClient = object : ScreenCaptureClient() {
-                override fun onScreenCap(bm: Bitmap) {
+                override fun onScreenCap(bm: Bitmap, imgId: Long) {
                     Log.d(TAG, "onScreenCap: $bm")
                     lastScreencap = bm
+                    lastScreencapId = imgId
 
                     screenCapLatchLock.lock()
                     screenCapLatch?.countDown()
@@ -431,6 +434,13 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
         screenCapLatch = null
         screenCapLatchLock.unlock()
+
+        if (lastScreencapId == lastRetrievedScreencapId) {
+            val msg = "WARN: Last screencap has not changed since last request"
+            onLogChanged(ScriptApi.LogEntry(msg))
+            Log.w(TAG, msg)
+        }
+        lastRetrievedScreencapId = lastScreencapId
 
         return lastScreencap
     }
