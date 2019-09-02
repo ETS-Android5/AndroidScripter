@@ -49,7 +49,7 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
         stopButton.setOnClickListener { stopProjection() }
 
         screenCapClient = object : ScreenCaptureClient() {
-                override fun onScreenCap(bm: Bitmap) {
+                override fun onScreenCap(bm: Bitmap, imgId: Long) {
                     val imgText = tessHelper.extractText(bm)
                     lastImgText = imgText
                     Log.i(TAG, "Image text: \"$imgText\"")

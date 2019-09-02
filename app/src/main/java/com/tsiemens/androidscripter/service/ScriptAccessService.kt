@@ -48,11 +48,11 @@ class NodeHandle(val node : AccessibilityNodeInfo) {
 
 class WindowState(val pkg: String?, val activity: String?)
 
-class ScriptService2 : AccessibilityService() {
+class ScriptAccessService : AccessibilityService() {
 //    var lastNode : NodeHandle? = null
 //    var lastWindowStateNode : NodeHandle? = null
     companion object {
-        val TAG = ScriptService2::class.java.simpleName
+        val TAG = ScriptAccessService::class.java.simpleName
 
         val ACTION_TO_SERVICE = "com.tsiemens.androidscripter.LBcastToScriptService"
         val ACTION_FROM_SERVICE = "com.tsiemens.androidscripter.LBcastFromScriptService"
@@ -60,7 +60,7 @@ class ScriptService2 : AccessibilityService() {
         var currWindowState: WindowState? = null
     }
 
-    private class ServiceBcastReceiver(val service: ScriptService2) : BroadcastReceiver() {
+    private class ServiceBcastReceiver(val service: ScriptAccessService) : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             service.onReceiveBcast(intent)
         }
@@ -263,7 +263,7 @@ class ServiceBcastClient(val context: Context) {
     private fun makeIntent(actionType: String): Intent {
         val outIntent = Intent()
         outIntent.action =
-            ScriptService2.ACTION_TO_SERVICE
+            ScriptAccessService.ACTION_TO_SERVICE
         outIntent.putExtra("type", actionType)
         return outIntent
     }
@@ -271,7 +271,7 @@ class ServiceBcastClient(val context: Context) {
     fun sendDoOcr() {
         val outIntent = Intent()
         outIntent.action =
-            ScriptService2.ACTION_TO_SERVICE
+            ScriptAccessService.ACTION_TO_SERVICE
         outIntent.putExtra("type",
             ServiceBcast.TYPE_OCR_SCREENSHOT
         )

@@ -147,6 +147,13 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
         }.start()
     }
 
+    override fun onDestroy() {
+        Log.d(TAG, "onDestroy")
+        super.onDestroy()
+        lastImgPtr.untrack()
+        stopProjection()
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "onActivityResult $requestCode")
         if (requestCode == SCREENCAP_REQUEST_CODE) {
@@ -204,7 +211,10 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     fun stopProjection() {
         Log.i(TAG, "stopProjection")
         projecting = false
-        looperHandler.post { projection?.stop() }
+        looperHandler.post {
+            projection?.stop()
+            projection = null
+        }
     }
 
     // from OnImageAvailableListener
@@ -234,7 +244,6 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
                     // This is passed on, so don't recycle the bitmap
                     clientRef.replyToReqeust(displayImg.toBitmap(), displayImg.imgId)
                 }
-
             }
         } catch (e: Exception) {
             Log.e(TAG, Log.getStackTraceString(e))

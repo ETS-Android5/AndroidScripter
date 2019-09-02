@@ -3,7 +3,7 @@ package com.tsiemens.androidscripter
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
-import com.tsiemens.androidscripter.service.ScriptService2
+import com.tsiemens.androidscripter.service.ScriptAccessService
 import com.tsiemens.androidscripter.service.ServiceBcastClient
 import com.tsiemens.androidscripter.service.WindowState
 import java.text.SimpleDateFormat
@@ -89,7 +89,7 @@ class ScriptApi(val ctx: Context,
 
     fun foregroundWindowState(): WindowState? {
         handlePendingSignals()
-        return ScriptService2.currWindowState
+        return ScriptAccessService.currWindowState
     }
 
     fun getScreenCap(): Bitmap? {

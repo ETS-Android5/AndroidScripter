@@ -71,6 +71,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d(TAG, "onCreate")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scriptrunner)
 

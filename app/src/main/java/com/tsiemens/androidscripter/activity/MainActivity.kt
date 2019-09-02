@@ -20,8 +20,7 @@ import android.content.IntentFilter
 import android.media.projection.MediaProjectionManager
 import com.tsiemens.androidscripter.*
 import com.tsiemens.androidscripter.service.AccessibilitySettingDialogFragment
-import com.tsiemens.androidscripter.service.ScriptService2
-import com.tsiemens.androidscripter.service.ServiceBcastClient
+import com.tsiemens.androidscripter.service.ScriptAccessService
 
 private class MyReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -82,7 +81,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ScriptRunnerActivity::class.java))
         }
 
-        if (!isMyServiceRunning(ScriptService2::class.java)) {
+        if (!isMyServiceRunning(ScriptAccessService::class.java)) {
             AccessibilitySettingDialogFragment()
                 .show(supportFragmentManager, "")
         }
@@ -96,7 +95,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         LocalBroadcastManager.getInstance(this).registerReceiver(
             bcastReceiver!!,
-            IntentFilter(ScriptService2.ACTION_FROM_SERVICE)
+            IntentFilter(ScriptAccessService.ACTION_FROM_SERVICE)
         )
         if (overlayManager.permittedToShow()) {
             // overlayManager.showOverlay()
