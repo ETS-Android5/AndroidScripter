@@ -2,6 +2,7 @@ package com.tsiemens.androidscripter.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -118,10 +119,14 @@ class ScriptListActivity : AppCompatActivity() {
     }
 
     private fun startScriptActivity(key: ScriptKey) {
-        val intent = Intent(this@ScriptListActivity,
+        // Run this on a very slight delay, to allow the ripple effect to take effect before
+        // interrupting the UI thread to spawn the activity.
+        Handler(mainLooper).postDelayed( {
+            val intent = Intent(this@ScriptListActivity,
                 ScriptRunnerActivity::class.java)
-        intent.putExtra(ScriptRunnerActivity.INTENT_EXTRA_SCRIPT_KEY, key.toString())
-        startActivity(intent)
+            intent.putExtra(ScriptRunnerActivity.INTENT_EXTRA_SCRIPT_KEY, key.toString())
+            startActivity(intent)
+        }, 100)
     }
 
     private fun createNewScript() {
@@ -148,27 +153,17 @@ class ScriptFileAdapter(private val myDataset: List<ScriptFile>) :
     // Complex data items may need more than one view per item, and
     // you provide access to all the views for a data item in a view holder.
     // Each data item is just a string in this case that is shown in a TextView.
-    class MyViewHolder(val textView: TextView) : RecyclerView.ViewHolder(textView)
+    class MyViewHolder(listItem: View, val textView: TextView) : RecyclerView.ViewHolder(listItem)
 
     // Create new views (invoked by the layout manager)
-    override fun onCreateViewHolder(parent: ViewGroup,
-                                    viewType: Int): ScriptFileAdapter.MyViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
         // create a new view
-        val textView = LayoutInflater.from(parent.context)
-            .inflate(android.R.layout.simple_list_item_1, parent, false) as TextView
+        val listItem = LayoutInflater.from(parent.context)
+            .inflate(R.layout.simple_selectable_list_item, parent, false)
         // set the view's size, margins, paddings and layout parameters
 
-        textView.isClickable = true
-        textView.isFocusable = true
-
-        // Apply the "wave" effect on click
-        val attrs = intArrayOf(android.R.attr.selectableItemBackground)
-        val typedArray = parent.context.obtainStyledAttributes(attrs)
-        val backgroundResource = typedArray.getResourceId(0, 0)
-        typedArray.recycle()
-        textView.foreground = parent.context.getDrawable(backgroundResource)
-
-        return MyViewHolder(textView)
+        val textView = listItem.findViewById<TextView>(R.id.primary_text)
+        return MyViewHolder(listItem, textView)
     }
 
     // Replace the contents of a view (invoked by the layout manager)
