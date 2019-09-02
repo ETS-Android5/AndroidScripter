@@ -119,6 +119,11 @@ class OverlayManager(private val context: Context) {
         params!!.x = 0
         params!!.y = (screenSize.y * 0.3).toInt()
         wm!!.updateViewLayout(overlayRoot, params)
+
+        // Limit the default width of the overlay
+        val sizeFrameParams = sizeFrame.layoutParams
+        val largestScreenLength = max(screenSize.x, screenSize.y)
+        sizeFrameParams.width = (largestScreenLength * 0.4).toInt()
     }
 
     fun started(): Boolean {
