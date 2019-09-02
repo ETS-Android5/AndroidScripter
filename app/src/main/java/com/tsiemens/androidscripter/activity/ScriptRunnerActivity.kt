@@ -3,6 +3,7 @@ package com.tsiemens.androidscripter.activity
 import android.graphics.Bitmap
 import android.content.Intent
 import android.os.Bundle
+import android.support.v7.app.AlertDialog
 import android.support.v7.widget.AppCompatImageButton
 import android.support.v7.widget.Toolbar
 import android.util.Log
@@ -207,6 +208,17 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         reqTask.execute((scriptFile as UserScriptFile).url)
     }
 
+    private fun deleteUserScript() {
+        val builder = AlertDialog.Builder(this)
+        builder.setMessage("Delete script?")
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.action_delete) { _, _ ->
+                scriptStorage.deleteUserScript(scriptFile as UserScriptFile)
+                finish()
+            }
+        builder.create().show()
+    }
+
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
@@ -275,6 +287,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         if (scriptFile.key.type == ScriptType.sample) {
             menu.findItem(R.id.action_edit).isEnabled = false
             menu.findItem(R.id.action_refresh).isEnabled = false
+            menu.findItem(R.id.action_delete).isEnabled = false
         }
         return true
     }
@@ -288,6 +301,12 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
             R.id.action_refresh -> {
                 if (scriptFile.key.type == ScriptType.user) {
                     loadUserScript(tryStorage = false)
+                }
+                true
+            }
+            R.id.action_delete -> {
+                if (scriptFile.key.type == ScriptType.user) {
+                    deleteUserScript()
                 }
                 true
             }

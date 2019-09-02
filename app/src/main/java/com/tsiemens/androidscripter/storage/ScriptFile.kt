@@ -143,7 +143,7 @@ class ScriptFileStorage(val context: Context) {
     }
 
     fun getScriptFiles(): List<ScriptFile> {
-        return getSampleScriptFiles() + getUserScriptFiles()
+        return getUserScriptFiles() + getSampleScriptFiles()
     }
 
     fun putUserScriptFile(script: UserScriptFile) {
@@ -188,6 +188,17 @@ class ScriptFileStorage(val context: Context) {
             return out.toString()
         }
         return null
+    }
+
+    fun deleteUserScript(script: UserScriptFile) {
+        val pathToCodeFile = CODE_DIRECTORY + "/" + script.storageFilename()
+        val file = File(pathToCodeFile)
+        if (file.exists()) {
+            file.delete()
+        }
+        val userScripts = getUserScriptFilesMap()
+        userScripts.remove(script.key.index)
+        putUserScriptFilesMap(userScripts)
     }
 }
 

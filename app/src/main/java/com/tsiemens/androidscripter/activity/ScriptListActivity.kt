@@ -35,9 +35,6 @@ class ScriptListActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         fab.setOnClickListener { view ->
-//            scriptFiles.add("Entry " + nextNum.toString())
-//            nextNum++
-//            viewAdapter.notifyDataSetChanged()
             createNewScript()
         }
 
