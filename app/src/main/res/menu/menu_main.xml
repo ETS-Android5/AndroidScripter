@@ -17,4 +17,9 @@
             android:title="Prototype Activity"
             android:orderInCategory="100"
             app:showAsAction="never"/>
+
+    <item android:id="@+id/action_licenses"
+            android:title="License"
+            android:orderInCategory="100"
+            app:showAsAction="never"/>
 </menu>

@@ -10,6 +10,7 @@ import android.view.*
 import android.widget.TextView
 import com.tsiemens.androidscripter.service.AccessibilitySettingDialogFragment
 import com.tsiemens.androidscripter.R
+import com.tsiemens.androidscripter.dialog.LicenseDialog
 import com.tsiemens.androidscripter.service.ScriptAccessService
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.service.isMyServiceRunning
@@ -94,6 +95,10 @@ class ScriptListActivity : AppCompatActivity() {
             }
             R.id.action_launch_prototype_activity -> {
                 startActivity(Intent(this, MainActivity::class.java))
+                true
+            }
+            R.id.action_licenses -> {
+                LicenseDialog().show(supportFragmentManager, "License dialog")
                 true
             }
             else -> super.onOptionsItemSelected(item)
