@@ -6,36 +6,38 @@ import org.apache.commons.io.IOUtils
 import java.lang.Exception
 import java.net.URL
 
-class RequestTask: AsyncTask<String, Unit, String>() {
+class RequestResult(val respData: String?, val error: Exception?)
+
+class RequestTask: AsyncTask<String, Unit, RequestResult>() {
     companion object {
         val TAG = RequestTask::class.java.simpleName
     }
 
     interface OnResponseListener {
-        fun onResponse(resp: String?)
+        fun onResponse(resp: String)
+        fun onError(e: Exception)
     }
     var listener: OnResponseListener? = null
 
-    override fun doInBackground(vararg urls: String?): String? {
+    override fun doInBackground(vararg urls: String?): RequestResult {
         try {
             Log.i(TAG, "Requesting ${urls[0]}")
             val url = URL(urls[0])
             val con = url.openConnection()
             val inStream = con.getInputStream()
-//            val status = con.getHeaderField("Status")
-//            Log.i(TAG, "Status: $status")
-//            con.headerFields.forEach { k, l ->
-//                Log.d(TAG, "header $k: $l")
-//            }
-            return IOUtils.toString(inStream, con.contentEncoding)
+            return RequestResult(IOUtils.toString(inStream, con.contentEncoding), null)
         } catch (e: Exception) {
             Log.e(TAG, "${e.javaClass}: ${e.message}")
+            return RequestResult(null, e)
         }
-        return null
     }
 
-    override fun onPostExecute(result: String?) {
-        listener?.onResponse(result)
+    override fun onPostExecute(result: RequestResult) {
+        if (result.respData != null) {
+            listener?.onResponse(result.respData)
+        } else if (result.error != null) {
+            listener?.onError(result.error)
+        }
         super.onPostExecute(result)
     }
 }

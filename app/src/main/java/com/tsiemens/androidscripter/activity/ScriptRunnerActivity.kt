@@ -20,6 +20,7 @@ import com.tsiemens.androidscripter.widget.ScriptController
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelperColl
 import com.tsiemens.androidscripter.widget.ScriptState
+import java.lang.Exception
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -190,19 +191,18 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
         val reqTask = RequestTask()
         reqTask.listener = object : RequestTask.OnResponseListener {
-            override fun onResponse(resp: String?) {
-                if (resp != null) {
-                    scriptCode = resp
-                    scriptStorage.putUserScriptCode(scriptFile as UserScriptFile,
-                                                    scriptCode!!)
-                    script = null
-                    scriptUIControllers.notifyScriptStateChanged()
-                    Toast.makeText(this@ScriptRunnerActivity,
-                        "Script loaded", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@ScriptRunnerActivity,
-                        "Error getting script", Toast.LENGTH_SHORT).show()
-                }
+            override fun onResponse(resp: String) {
+                scriptCode = resp
+                scriptStorage.putUserScriptCode(scriptFile as UserScriptFile,
+                                                scriptCode!!)
+                script = null
+                scriptUIControllers.notifyScriptStateChanged()
+                Toast.makeText(this@ScriptRunnerActivity,
+                    "Script loaded", Toast.LENGTH_SHORT).show()
+            }
+            override fun onError(e: Exception) {
+                Toast.makeText(this@ScriptRunnerActivity,
+                    "Error getting script: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
         reqTask.execute((scriptFile as UserScriptFile).url)
