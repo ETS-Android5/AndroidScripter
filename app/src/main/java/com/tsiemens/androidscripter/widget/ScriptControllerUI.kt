@@ -1,14 +1,12 @@
 package com.tsiemens.androidscripter.widget
 
-import android.os.Handler
-import android.os.Looper
 import android.support.v7.widget.AppCompatImageButton
 import android.util.Log
 import android.view.View
 import android.widget.ScrollView
 import android.widget.TextView
 import com.tsiemens.androidscripter.R
-import com.tsiemens.androidscripter.ScriptApi
+import com.tsiemens.androidscripter.script.Api
 import android.content.Context
 import com.tsiemens.androidscripter.util.DrawableUtil
 import com.tsiemens.androidscripter.util.UiUtil.Companion.forceToMainThread
@@ -85,7 +83,7 @@ class ScriptControllerUIHelper(val context: Context,
         setButtonEnabled(restartButton, runnable && scriptState != ScriptState.stopped, R.drawable.ic_replay_black_48dp)
     }
 
-    fun onLog(newLog: ScriptApi.LogEntry) {
+    fun onLog(newLog: Api.LogEntry) {
         logText.append(newLog.toString() + "\n")
         val nChars = logText.length()
         if (nChars > MAX_LOG_SIZE_CHARS) {
@@ -116,7 +114,7 @@ class ScriptControllerUIHelperColl {
         }
     }
 
-    fun onLog(newLog: ScriptApi.LogEntry) {
+    fun onLog(newLog: Api.LogEntry) {
         forceToMainThread {
             helpers.forEach {
                 it.onLog(newLog)

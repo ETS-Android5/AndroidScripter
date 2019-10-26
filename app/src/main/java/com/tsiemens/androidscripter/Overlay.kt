@@ -14,6 +14,7 @@ import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.Button
 import android.widget.Spinner
+import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.widget.ScriptController
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
 import java.lang.IllegalStateException
@@ -25,7 +26,7 @@ class OverlayContainer(val root: View) {
 }
 
 // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
-class OverlayManager(private val context: Context) {
+class OverlayManager(private val context: Context): Api.OverlayManager {
     companion object {
         val TAG = OverlayManager::class.java.simpleName
     }
@@ -179,6 +180,24 @@ class OverlayManager(private val context: Context) {
             controller
         )
     }
+
+    // From ScriptApi.OverlayManager
+    override fun getOverlayDimens(): Api.WinDimen? {
+        val overlayView = overlay?.root
+        val _wm = wm
+        if (overlayView != null && _wm != null) {
+            val screenSize = Point()
+            _wm.defaultDisplay.getSize(screenSize)
+            return Api.WinDimen(
+                overlayView.x / screenSize.x,
+                overlayView.y / screenSize.y,
+                overlayView.layoutParams.width / screenSize.x.toFloat(),
+                overlayView.layoutParams.height / screenSize.y.toFloat()
+            )
+        }
+        return null
+    }
+
 }
 
 class ViewDragger(val params: WindowManager.LayoutParams,

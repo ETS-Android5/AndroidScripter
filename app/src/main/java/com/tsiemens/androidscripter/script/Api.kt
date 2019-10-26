@@ -1,8 +1,9 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.script
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import com.tsiemens.androidscripter.getUsageStatsForegroundActivityName
 import com.tsiemens.androidscripter.service.ScriptAccessService
 import com.tsiemens.androidscripter.service.ServiceBcastClient
 import com.tsiemens.androidscripter.service.WindowState
@@ -14,18 +15,20 @@ import kotlin.concurrent.write
 import kotlin.math.min
 
 @Suppress("UNUSED")
-class ScriptApi(val ctx: Context,
-                val logChangeListener: LogChangeListener?,
-                val screenProvider: ScreenProvider?) {
+class Api(val ctx: Context,
+          val logChangeListener: LogChangeListener?,
+          val screenProvider: ScreenProvider?,
+          val overlayManager: OverlayManager?) {
     val logLock = ReentrantReadWriteLock()
     val paused = AtomicBoolean(false)
 
     val serviceClient = ServiceBcastClient(ctx)
 
     companion object {
-        val TAG = ScriptApi::class.java.simpleName
+        val TAG = Api::class.java.simpleName
 
-        private val dateFormat: SimpleDateFormat = createDateFormat()
+        private val dateFormat: SimpleDateFormat =
+            createDateFormat()
 
         private fun createDateFormat(): SimpleDateFormat {
             val sdf = SimpleDateFormat("MM/dd HH:mm:ss", Locale.getDefault())
@@ -54,6 +57,14 @@ class ScriptApi(val ctx: Context,
 
     interface ScreenProvider {
         fun getScreenCap(): Bitmap?
+    }
+
+    // values are between 0 and 1.0
+    class WinDimen(val x: Float, val y: Float,
+                   val width: Float, val height: Float)
+
+    interface OverlayManager {
+        fun getOverlayDimens(): WinDimen?
     }
 
     private fun maybeEndThread() {
@@ -90,6 +101,10 @@ class ScriptApi(val ctx: Context,
     fun foregroundWindowState(): WindowState? {
         handlePendingSignals()
         return ScriptAccessService.currWindowState
+    }
+
+    fun getOverlayDimens(): WinDimen? {
+        return overlayManager?.getOverlayDimens()
     }
 
     fun getScreenCap(): Bitmap? {

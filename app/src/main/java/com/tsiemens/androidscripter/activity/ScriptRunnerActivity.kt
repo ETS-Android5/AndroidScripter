@@ -14,6 +14,8 @@ import android.view.MenuItem
 import android.widget.*
 import com.chaquo.python.PyException
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
+import com.tsiemens.androidscripter.script.Script
+import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.storage.*
 import com.tsiemens.androidscripter.util.UiUtil
 import com.tsiemens.androidscripter.widget.ScriptController
@@ -27,7 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
-    ScriptApi.LogChangeListener, ScriptApi.ScreenProvider {
+    Api.LogChangeListener, Api.ScreenProvider {
 
     val overlayManager = OverlayManager(this)
 
@@ -43,7 +45,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     var scriptThread: Thread? = null
     var script: Script? = null
     var scriptCode: String? = null
-    var scriptApi = ScriptApi(this, this, this)
+    var scriptApi = Api(this, this, this, overlayManager)
 
     lateinit var scriptNameTv: TextView
     lateinit var logTv: TextView
@@ -367,7 +369,11 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         } else if (script == null && scriptCode != null) {
             try {
                 scriptApi.paused.set(false)
-                script = Script(this, scriptFile.key.toString(), scriptCode!!)
+                script = Script(
+                    this,
+                    scriptFile.key.toString(),
+                    scriptCode!!
+                )
                 if (!projecting) {
                     startProjection()
                 }
@@ -383,7 +389,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                 scriptUIControllers.notifyScriptStateChanged()
                 scriptThread!!.start()
             } catch (e: PyException) {
-                onLogChanged(ScriptApi.LogEntry("ERROR: ${e.message}"))
+                onLogChanged(Api.LogEntry("ERROR: ${e.message}"))
             }
         }
     }
@@ -435,7 +441,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     }
 
     // From LogChangeListener
-    override fun onLogChanged(newLog: ScriptApi.LogEntry) {
+    override fun onLogChanged(newLog: Api.LogEntry) {
         scriptUIControllers.onLog(newLog)
     }
 
@@ -457,7 +463,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         if (lastScreencapId == lastRetrievedScreencapId) {
             val msg = "WARN: Last screencap has not changed since last request"
-            onLogChanged(ScriptApi.LogEntry(msg))
+            onLogChanged(Api.LogEntry(msg))
             Log.w(TAG, msg)
         }
         lastRetrievedScreencapId = lastScreencapId

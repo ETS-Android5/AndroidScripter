@@ -8,6 +8,10 @@ class Api:
     def sleep(self, seconds):
         self._api.sleep(seconds)
 
+
+    def get_overlay_dimens(self):
+        return self._api.getOverlayDimens()
+
     def foreground_activity_package(self):
         return self._api.foregroundActivityPackage()
 

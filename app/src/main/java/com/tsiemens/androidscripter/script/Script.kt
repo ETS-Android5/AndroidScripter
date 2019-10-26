@@ -1,4 +1,4 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.script
 
 import android.content.Context
 import android.util.Log
@@ -19,7 +19,7 @@ class Script(context: Context, modName: String, scriptCode: String) {
         module = modBuilder.callAttr("compile_module", modName, scriptCode)
     }
 
-    fun run(api: ScriptApi) {
+    fun run(api: Api) {
         try {
             val pyApiMod = Python.getInstance().getModule("androidscripter.api")
             val pyApi = pyApiMod.callAttr("newApi", api)
@@ -38,7 +38,7 @@ class Script(context: Context, modName: String, scriptCode: String) {
     }
 
     companion object {
-        val TAG = ScriptApi::class.java.simpleName
+        val TAG = Api::class.java.simpleName
 
         fun ensurePythonStarted(ctx: Context) {
             if (!Python.isStarted()) {
