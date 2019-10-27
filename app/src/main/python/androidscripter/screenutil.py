@@ -1,3 +1,5 @@
+import java
+
 from androidscripter import color
 
 """
@@ -69,3 +71,12 @@ def check_screen_color_at_point(api, coord, targetColorStr, portrait=True, dist=
    else:
       api.log("screen bitmap was None")
       return None
+
+
+# Compiled portion of the module
+_jscreenUtil = None
+def javalib():
+   global _jscreenUtil
+   if _jscreenUtil is None:
+      _jscreenUtil = java.jclass("com.tsiemens.androidscripter.script.ScreenUtil")
+   return _jscreenUtil.Companion

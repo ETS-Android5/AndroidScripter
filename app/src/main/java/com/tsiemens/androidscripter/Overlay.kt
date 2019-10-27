@@ -15,6 +15,7 @@ import android.widget.AdapterView
 import android.widget.Button
 import android.widget.Spinner
 import com.tsiemens.androidscripter.script.Api
+import com.tsiemens.androidscripter.util.UiUtil
 import com.tsiemens.androidscripter.widget.ScriptController
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
 import java.lang.IllegalStateException
@@ -186,13 +187,18 @@ class OverlayManager(private val context: Context): Api.OverlayManager {
         val overlayView = overlay?.root
         val _wm = wm
         if (overlayView != null && _wm != null) {
-            val screenSize = Point()
-            _wm.defaultDisplay.getSize(screenSize)
+            val screenSize = UiUtil.relativeDisplaySize(_wm.defaultDisplay)
+
+            val posArr = intArrayOf(0, 0)
+            overlayView.getLocationOnScreen(posArr)
+            Log.d(TAG, "getOverlayDimens: screen pos: ${posArr.contentToString()}")
+            Log.d(TAG, "getOverlayDimens: size: ${overlayView.width}, ${overlayView.height}")
+            Log.d(TAG, "getOverlayDimens: screen: ${screenSize.x}, ${screenSize.y}")
             return Api.WinDimen(
-                overlayView.x / screenSize.x,
-                overlayView.y / screenSize.y,
-                overlayView.layoutParams.width / screenSize.x.toFloat(),
-                overlayView.layoutParams.height / screenSize.y.toFloat()
+                posArr[0].toFloat() / screenSize.x.toFloat(),
+                posArr[1].toFloat() / screenSize.y.toFloat(),
+                overlayView.width.toFloat() / screenSize.x.toFloat(),
+                overlayView.height.toFloat() / screenSize.y.toFloat()
             )
         }
         return null

@@ -2,6 +2,7 @@ package com.tsiemens.androidscripter.script
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Point
 import android.util.Log
 import com.tsiemens.androidscripter.getUsageStatsForegroundActivityName
 import com.tsiemens.androidscripter.service.ScriptAccessService
@@ -60,8 +61,15 @@ class Api(val ctx: Context,
     }
 
     // values are between 0 and 1.0
-    class WinDimen(val x: Float, val y: Float,
-                   val width: Float, val height: Float)
+    class WinDimen(val xPct: Float, val yPct: Float,
+                   val widthPct: Float, val heightPct: Float) {
+        fun contains(pt: Point, screenWidth: Int, screenHeight: Int): Boolean {
+            val ptXPct: Float = pt.x.toFloat() / screenWidth.toFloat()
+            val ptYPct: Float = pt.y.toFloat() / screenHeight.toFloat()
+            return (ptXPct >= xPct && ptYPct >= yPct &&
+                    ptXPct < (xPct + widthPct) && ptYPct < (yPct + heightPct))
+        }
+    }
 
     interface OverlayManager {
         fun getOverlayDimens(): WinDimen?
@@ -104,7 +112,13 @@ class Api(val ctx: Context,
     }
 
     fun getOverlayDimens(): WinDimen? {
-        return overlayManager?.getOverlayDimens()
+        val wd = overlayManager?.getOverlayDimens()
+        if (wd != null) {
+            Log.d(TAG, "wd: ${wd.xPct}, ${wd.yPct}, ${wd.widthPct}, ${wd.heightPct}")
+        } else {
+            Log.d(TAG, "wd: null")
+        }
+        return wd
     }
 
     fun getScreenCap(): Bitmap? {
