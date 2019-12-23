@@ -21,6 +21,12 @@ class Api:
     def get_screencap(self):
         return self._api.getScreenCap()
 
+    def is_network_metered(self):
+        '''
+        Returns True, False, or None if the network and/or its capabilities could not be determined
+        '''
+        return self._api.isNetworkMetered()
+
     def send_click(self, x, y, is_percent=False):
         return self._api.sendClick(x, y, is_percent)
 

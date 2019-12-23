@@ -3,6 +3,8 @@ package com.tsiemens.androidscripter.script
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
 import com.tsiemens.androidscripter.getUsageStatsForegroundActivityName
 import com.tsiemens.androidscripter.service.ScriptAccessService
@@ -123,6 +125,16 @@ class Api(val ctx: Context,
 
     fun getScreenCap(): Bitmap? {
         return screenProvider?.getScreenCap()
+    }
+
+    fun isNetworkMetered(): Boolean? {
+        val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val net = cm.activeNetwork ?: return null
+        val caps = cm.getNetworkCapabilities(net)
+        if (caps != null) {
+            return !caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
+        }
+        return null
     }
 
     fun sendClick(x: Float, y: Float, isPercent: Boolean = false) {
