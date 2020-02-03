@@ -30,6 +30,10 @@ class ScriptListActivity : AppCompatActivity() {
     private val scriptFiles = arrayListOf<ScriptFile>()
     private val viewAdapter = ScriptFileAdapter(scriptFiles)
 
+    companion object {
+        val TAG = ScriptListActivity::class.java.simpleName
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_script_list)

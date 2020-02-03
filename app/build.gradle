@@ -25,6 +25,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets {
+        main {
+            // Opencv jnilibs are from
+            // https://github.com/chaoyangnz/opencv3-android-sdk-with-contrib
+            jniLibs.srcDirs += "${projectDir}/jniLibs"
+        }
+    }
 }
 
 dependencies {
@@ -41,4 +48,5 @@ dependencies {
 
     implementation 'com.rmtheis:tess-two:9.0.0'
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
+    implementation project(path: ':libraries:openCVLibrary340dev')
 }

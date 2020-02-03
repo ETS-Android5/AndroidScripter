@@ -18,6 +18,7 @@ import android.widget.Toast
 import com.tsiemens.androidscripter.OverlayManager
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.TesseractHelper
+import com.tsiemens.androidscripter.script.ScreenUtil
 import fi.iki.elonen.NanoHTTPD
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -75,7 +76,11 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
                         }
                         mImgView!!.setImageBitmap(bm)
                     }
-                    httpd?.bitmap = bm
+                    val newBm = ScreenUtil.toGray(bm)
+                    val xs = ScreenUtil.findXs(bm)
+                    val lines = ScreenUtil.getLinesFromXs(xs)
+                    ScreenUtil.drawLinesToBm(lines, newBm)
+                    httpd?.bitmap = newBm
 
                     if (Looper.myLooper() == Looper.getMainLooper()) {
                        action()

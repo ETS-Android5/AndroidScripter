@@ -1,0 +1,19 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 26
+    //buildToolsVersion "x.y.z" // not needed since com.android.tools.build:gradle:3.0.0
+    // buildToolsVersion "28.0.3"
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 26
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
