@@ -319,7 +319,16 @@ class ScreenUtil {
         fun type(): LineType = if (westY() < eastY()) { LineType.NW_SE } else { LineType.SW_NE }
 
         override fun toString(): String {
-            return lineVec.contentToString()
+            val sb = StringBuilder()
+            sb.append("[")
+            for (i in 0 until lineVec.size) {
+                sb.append(lineVec[i].toInt())
+                if (i < lineVec.size - 1) {
+                    sb.append(", ")
+                }
+            }
+            sb.append("]")
+            return sb.toString()
         }
     }
 
