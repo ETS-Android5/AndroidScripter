@@ -5,15 +5,19 @@ import android.graphics.Bitmap
 import android.graphics.Point
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.Handler
 import android.util.Log
+import com.tsiemens.androidscripter.DebugOverlayManager
 import com.tsiemens.androidscripter.getUsageStatsForegroundActivityName
 import com.tsiemens.androidscripter.service.ScriptAccessService
 import com.tsiemens.androidscripter.service.ServiceBcastClient
 import com.tsiemens.androidscripter.service.WindowState
+import com.tsiemens.androidscripter.util.BitmapUtil
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.collections.ArrayList
 import kotlin.concurrent.write
 import kotlin.math.min
 
@@ -21,7 +25,8 @@ import kotlin.math.min
 class Api(val ctx: Context,
           val logChangeListener: LogChangeListener?,
           val screenProvider: ScreenProvider?,
-          val overlayManager: OverlayManager?) {
+          val overlayManager: OverlayManager?,
+          val debugOverlayManager: DebugOverlayManager?) {
     val logLock = ReentrantReadWriteLock()
     val paused = AtomicBoolean(false)
 
@@ -77,6 +82,11 @@ class Api(val ctx: Context,
         fun getOverlayDimens(): WinDimen?
     }
 
+    interface DebugOverlayManager {
+        fun onClickSent(x: Float, y: Float, isPercent: Boolean = false)
+        fun onXsFound(res: ScreenUtil.XDetectResult)
+    }
+
     private fun maybeEndThread() {
         if (Thread.currentThread().isInterrupted) {
             Log.i(TAG, "Interrupting thread")
@@ -127,6 +137,30 @@ class Api(val ctx: Context,
         return screenProvider?.getScreenCap()
     }
 
+    // TODO delete this
+    fun doXSearch() {
+        findXsInScreen()
+    }
+
+    class ScreenXsResult(val xs: List<ScreenUtil.Cross>?,
+                         val screenDimens: Point?,
+                         val ok: Boolean)
+
+    fun findXsInScreen(showDebugOverlay: Boolean = true): ScreenXsResult {
+        val bm = getScreenCap()
+        if (bm != null) {
+            val croppedBitmap = BitmapUtil.cropScreenshotPadding(bm)
+            val xs = ScreenUtil.findXs(croppedBitmap)
+            if (showDebugOverlay) {
+                debugOverlayManager?.onXsFound(xs)
+            }
+            return ScreenXsResult(xs.xs, Point(croppedBitmap.width, croppedBitmap.height), true)
+        } else {
+            Log.e(TAG, "doXSearch: could not get screen cap")
+        }
+        return ScreenXsResult(null, null, false)
+    }
+
     fun isNetworkMetered(): Boolean? {
         val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val net = cm.activeNetwork ?: return null
@@ -139,6 +173,7 @@ class Api(val ctx: Context,
 
     fun sendClick(x: Float, y: Float, isPercent: Boolean = false) {
         serviceClient.sendClick(x, y, isPercent)
+        debugOverlayManager?.onClickSent(x, y, isPercent)
     }
 
     fun pressBack() {

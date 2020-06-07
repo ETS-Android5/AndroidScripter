@@ -1,13 +1,17 @@
 package com.tsiemens.androidscripter.util
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.Matrix
+import android.util.Log
 import android.view.Surface
 import java.lang.Integer.max
 import java.lang.Integer.min
 
 class BitmapUtil {
     companion object {
+        val TAG = BitmapUtil::class.java.simpleName
+
         fun rotationAngle(ro: Int): Float {
             return when(ro) {
                 Surface.ROTATION_0 -> 0f
@@ -61,6 +65,56 @@ class BitmapUtil {
                 else -> throw IllegalArgumentException("Invalid rotation: $rotation")
             }
 
+        }
+
+        fun cropScreenshotPadding(bitmap: Bitmap): Bitmap {
+            val height = bitmap.height
+            val width = bitmap.width
+
+            var leftPadding = 0
+            while (leftPadding < width) {
+                val pix = bitmap.getPixel(leftPadding, height / 2)
+                if (Color.alpha(pix) != 0) {
+                    break
+                }
+                leftPadding++
+            }
+
+            var rightPadding = 0
+            while (rightPadding < width) {
+                val pix = bitmap.getPixel(width - 1 - rightPadding, height / 2)
+                if (Color.alpha(pix) != 0) {
+                    break
+                }
+                rightPadding++
+            }
+
+            var topPadding = 0
+            while (topPadding < width) {
+                val pix = bitmap.getPixel(width / 2, topPadding)
+                if (Color.alpha(pix) != 0) {
+                    break
+                }
+                topPadding++
+            }
+
+            var bottomPadding = 0
+            while (bottomPadding < width) {
+                val pix = bitmap.getPixel(width / 2, height - 1 - bottomPadding)
+                if (Color.alpha(pix) != 0) {
+                    break
+                }
+                bottomPadding++
+            }
+
+            Log.d(TAG, "cropScreenshotPadding: stripping padding: " +
+                  "left $leftPadding right $rightPadding top $topPadding bottom $bottomPadding")
+            if (leftPadding == 0 && rightPadding == 0 && topPadding == 0 && bottomPadding == 0) {
+                return bitmap
+            }
+            return Bitmap.createBitmap(bitmap, leftPadding, topPadding,
+                                        width - leftPadding - rightPadding,
+                                        height - topPadding - bottomPadding)
         }
     }
 }

@@ -150,33 +150,37 @@ class ScreenUtil {
             return outMat
         }
 
-        fun findXs(img: Bitmap): ArrayList<Cross> {
+        fun findXs(img: Bitmap): XDetectResult {
             val mat = toGrayMat(img)
-            return findXsInMat(mat)
+            return findXsInMat(mat, img.width, img.height)
         }
 
-        fun findXsInMat(img: Mat): ArrayList<Cross> {
+        fun findXsInMat(img: Mat, imgWidth: Int, imgHeight: Int): XDetectResult {
             // This should be twice the size of the X we're looking for.
             val lsd = org.opencv.ximgproc.Ximgproc.createFastLineDetector()
             val linesMat = MatOfFloat4()
             lsd.detect(img, linesMat)
 
-            val crossSideAprox = 40.0
+            val crossSideAprox = 20.0
+            val crossSideVariance = 15.0
+
 
             val lines = MatOfLines(linesMat)
             val sz = lines.size()
+            val linesForDebug = ArrayList<Line>(sz)
             var nCandiLines = 0
             val candiLines = arrayOfNulls<Line>(sz)
             for (i in 0 until sz) {
                 val line = lines.get(i)
+                linesForDebug.add(line)
                 // val str = line.lineVec.contentToString()
                 // Log.d(TAG, "$i/$sz Line $str")
 
                 // is line about the right size?
                 val x = abs(line.x1() - line.x2())
                 val y = abs(line.y1() - line.y2())
-                if (abs(crossSideAprox - x) > 30.0 ||
-                        abs(crossSideAprox - y) > 30.0) {
+                if (abs(crossSideAprox - x) > crossSideVariance ||
+                        abs(crossSideAprox - y) > crossSideVariance) {
                     // Log.d(TAG, "  Incorrect size")
                     continue
                 }
@@ -195,7 +199,7 @@ class ScreenUtil {
 
             Log.d(TAG, "Done finding segments. Found $nCandiLines")
 
-            val centerDist: Double = 10.0
+            val centerDist = 15.0
             val xs = arrayListOf<Cross>()
             for (i in 0 until nCandiLines) {
                 val line = candiLines[i]
@@ -252,7 +256,7 @@ class ScreenUtil {
                 }
             }
 
-            return xs
+            return XDetectResult(xs, linesForDebug, imgWidth, imgHeight)
         }
 
         fun getLinesFromXs(xs: List<Cross>): ArrayList<Line> {
@@ -284,6 +288,11 @@ class ScreenUtil {
             }
         }
     }
+
+    class XDetectResult(val xs: List<Cross>,
+                        val allLines: List<Line>,
+                        val imgWidth: Int,
+                        val imgHeight: Int)
 
     class Cross(val nw: Line) {
         var ne: Line? = null

@@ -15,6 +15,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import com.tsiemens.androidscripter.DebugOverlayManager
 import com.tsiemens.androidscripter.OverlayManager
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.TesseractHelper
@@ -33,6 +34,8 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
 
     // Set here for testing only
     val overlayManager = OverlayManager(this)
+
+    val debugOverlayManager = DebugOverlayManager(this)
 
     lateinit var tessHelper: TesseractHelper
 
@@ -78,7 +81,7 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
                     }
                     val newBm = ScreenUtil.toGray(bm)
                     val xs = ScreenUtil.findXs(bm)
-                    val lines = ScreenUtil.getLinesFromXs(xs)
+                    val lines = ScreenUtil.getLinesFromXs(xs.xs)
                     ScreenUtil.drawLinesToBm(lines, newBm)
                     httpd?.bitmap = newBm
 
@@ -133,6 +136,10 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
                 // The next image cap will return a response in the client
                 screenCapClient.requestScreenCap()
             })
+        }
+
+        if (debugOverlayManager.permittedToShow() && !debugOverlayManager.started()) {
+            debugOverlayManager.showOverlay()
         }
     }
 

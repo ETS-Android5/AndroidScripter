@@ -27,7 +27,7 @@ class OverlayContainer(val root: View) {
 }
 
 // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
-class OverlayManager(private val context: Context): Api.OverlayManager {
+class OverlayManager(context: Context): OverlayManagerBase(context), Api.OverlayManager {
     companion object {
         val TAG = OverlayManager::class.java.simpleName
     }
@@ -40,7 +40,7 @@ class OverlayManager(private val context: Context): Api.OverlayManager {
 
     @TargetApi(Build.VERSION_CODES.O)
     @SuppressWarnings("ClickableViewAccessibility")
-    fun showOverlay() {
+    override fun showOverlay() {
         if (overlay != null) {
             return
         }
@@ -128,19 +128,11 @@ class OverlayManager(private val context: Context): Api.OverlayManager {
         sizeFrameParams.width = (largestScreenLength * 0.4).toInt()
     }
 
-    fun started(): Boolean {
+    override fun started(): Boolean {
         return overlay != null
     }
 
-    fun permittedToShow(): Boolean {
-        return Settings.canDrawOverlays(context)
-    }
-
-    fun launchOverlayPermissionsActivity() {
-        context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
-    }
-
-    fun destroy() {
+    override fun destroy() {
         if (overlay != null) {
             wm!!.removeView(overlay!!.root)
             overlay = null

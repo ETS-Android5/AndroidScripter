@@ -32,6 +32,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     Api.LogChangeListener, Api.ScreenProvider {
 
     val overlayManager = OverlayManager(this)
+    val debugOverlayManager = DebugOverlayManager(this)
 
     lateinit var tessHelper: TesseractHelper
 
@@ -45,7 +46,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     var scriptThread: Thread? = null
     var script: Script? = null
     var scriptCode: String? = null
-    var scriptApi = Api(this, this, this, overlayManager)
+    var scriptApi = Api(this, this, this, overlayManager, debugOverlayManager)
 
     lateinit var scriptNameTv: TextView
     lateinit var logTv: TextView
@@ -252,6 +253,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
         if (overlayManager.permittedToShow() && !overlayManager.started()) {
             overlayManager.showOverlay()
+            debugOverlayManager.bringToFront()
+
             if (overlayScriptControllerUIHelper != null) {
                 scriptUIControllers.helpers.remove(overlayScriptControllerUIHelper!!)
             }
@@ -279,8 +282,29 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         overlayManager.destroy()
     }
 
-    override fun onDestroy() {
+    private fun stopDebugCanvasOverlay() {
+        debugOverlayManager.destroy()
+    }
+
+    private fun stopAllOverlays() {
         stopOverlay()
+        stopDebugCanvasOverlay()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!debugOverlayManager.permittedToShow()) {
+            Log.w(TAG, "Not permitted to show overlay")
+            debugOverlayManager.launchOverlayPermissionsActivity()
+            return
+        }
+        if (debugOverlayManager.permittedToShow() && !debugOverlayManager.started()) {
+            debugOverlayManager.showOverlay()
+        }
+    }
+
+    override fun onDestroy() {
+        stopAllOverlays()
         super.onDestroy()
     }
 
