@@ -14,12 +14,16 @@ import android.view.View
 import android.view.WindowManager
 import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.script.ScreenUtil
-import org.opencv.features2d.FlannBasedMatcher
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
-class FadingClick(val point: Point) {
+enum class PointIndicatorStyle {
+    CIRCLE,
+    SQUARE
+}
+
+class FadingPointIndicator(val point: Point, val style: PointIndicatorStyle, val paint: Paint) {
     val animator: ValueAnimator = ValueAnimator.ofInt(255, 0)
     init {
         animator.duration = 2000 // millis
@@ -33,18 +37,25 @@ class FadingClick(val point: Point) {
     }
 }
 
-class DebugCanvasOverlayView(ctx: Context, val screenSize: DisplayMetrics): View(ctx) {
+class DebugCanvasOverlayView(ctx: Context): View(ctx) {
+    private var screenSize = DisplayMetrics()
+
     val linePaint = Paint()
     val clickPaint = Paint()
+    val pointIndicatorPaint = Paint()
     val xPaint = Paint()
-    val clicks = ArrayDeque<FadingClick>()
+
+    val points = ArrayDeque<FadingPointIndicator>()
     // Cross and expire time
     val xs = ArrayDeque<Pair<ScreenUtil.Cross, Long>>()
     val timedLines = ArrayDeque<Pair<ScreenUtil.Line, Long>>()
     var lastXDetectImgWidth: Int = 1
     var lastXDetectImgHeight: Int = 1
-    var screenWidth = screenSize.widthPixels
-    var screenHeight = screenSize.heightPixels
+    var screenWidth = 0
+    var screenHeight = 0
+
+    var lastDrawHeight = 0
+    var lastDrawWidth = 0
 
     var cachedTopBarHeight: Int = 0
 
@@ -54,6 +65,9 @@ class DebugCanvasOverlayView(ctx: Context, val screenSize: DisplayMetrics): View
         val TAG = DebugCanvasOverlayView::class.java.simpleName
 
         val X_EXPIRE_DURATION = 4000L
+
+        val CIRCLE_RADIUS = 15f
+        val SQUARE_HALF_LEN = 15f
     }
 
     init {
@@ -67,37 +81,34 @@ class DebugCanvasOverlayView(ctx: Context, val screenSize: DisplayMetrics): View
         clickPaint.isDither = true
         clickPaint.style = Paint.Style.STROKE
 
+        pointIndicatorPaint.isAntiAlias = true
+        pointIndicatorPaint.color = Color.BLUE
+        pointIndicatorPaint.strokeWidth = 4f
+        pointIndicatorPaint.isDither = true
+        pointIndicatorPaint.style = Paint.Style.STROKE
+
         xPaint.isAntiAlias = true
         xPaint.color = Color.CYAN
         xPaint.strokeWidth = 3f
         xPaint.isDither = true
+
+        refreshScreenSize()
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        // divide by 3, assuming that the bottom bar is present, and is about twice the height of the top bar
-        cachedTopBarHeight = (screenSize.heightPixels - height) / 3
-
-//        canvas!!.drawLine(20f, 20f, width - 20f, height - 20f, linePaint)
-//        canvas.drawLine(100f, 0f, 100f, topBarHeight.toFloat(), linePaint)
-//        canvas.drawLine(0f, 100f, (screenSize.x - width).toFloat(), 100f, linePaint)
-
         if (canvas == null) {
             Log.d(TAG, "onDraw: Canvas was null")
             return
         }
-
         Log.d(TAG, "onDraw width: $width height: $height")
 
-        getLocationOnScreen(cachedLocationInScreen)
-        if (width < height) {
-            screenWidth = min(screenSize.widthPixels, screenSize.heightPixels)
-            screenHeight = max(screenSize.widthPixels, screenSize.heightPixels)
-        } else {
-            screenHeight = min(screenSize.widthPixels, screenSize.heightPixels)
-            screenWidth = max(screenSize.widthPixels, screenSize.heightPixels)
-        }
+        refreshCaches()
+
+//        canvas!!.drawLine(20f, 20f, width - 20f, height - 20f, linePaint)
+//        canvas.drawLine(100f, 0f, 100f, topBarHeight.toFloat(), linePaint)
+//        canvas.drawLine(0f, 100f, (screenSize.x - width).toFloat(), 100f, linePaint)
 
         // debug lines
 //        canvas.drawLine(0f, 3f, width.toFloat() - 3f, 3f, linePaint)
@@ -128,20 +139,63 @@ class DebugCanvasOverlayView(ctx: Context, val screenSize: DisplayMetrics): View
             drawX(x.first, canvas)
         }
 
-        for (click in clicks) {
-            drawClick(click, canvas)
+        for (p in points) {
+            drawPointIndicator(p, canvas)
+        }
+
+        lastDrawHeight = height
+        lastDrawWidth = width
+    }
+
+    private fun refreshCaches() {
+        // divide by 3, assuming that the bottom bar is present, and is about twice the height of the top bar
+        cachedTopBarHeight = (screenSize.heightPixels - height) / 3
+
+        getLocationOnScreen(cachedLocationInScreen)
+
+        if (lastDrawHeight != height || lastDrawWidth != width) {
+            refreshScreenSize()
         }
     }
 
-    private fun drawClick(p: FadingClick, canvas: Canvas) {
-        val alpha = p.animator.animatedValue as Int
-        clickPaint.alpha = alpha
-        canvas.drawCircle(screenXToCanvasX(p.point.x.toFloat()),
-                          screenYToCanvasY(p.point.y.toFloat()), 15f, clickPaint)
+    private fun refreshScreenSize() {
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val display = wm.defaultDisplay
+        display.getRealMetrics(screenSize)
 
-        if (alpha == 0 && clicks.first == p) {
-            Log.d(TAG, "Cleaned up fading click")
-            clicks.removeFirst()
+        if ((screenSize.widthPixels < screenSize.heightPixels) == (width < height)) {
+            screenWidth = screenSize.widthPixels
+            screenHeight = screenSize.heightPixels
+        } else {
+            screenHeight = screenSize.widthPixels
+            screenWidth = screenSize.heightPixels
+        }
+    }
+
+    private fun drawPointIndicator(p: FadingPointIndicator, canvas: Canvas) {
+        val alpha = p.animator.animatedValue as Int
+        p.paint.alpha = alpha
+        when (p.style) {
+            PointIndicatorStyle.CIRCLE ->
+                canvas.drawCircle(screenXToCanvasX(p.point.x.toFloat()),
+                                  screenYToCanvasY(p.point.y.toFloat()), CIRCLE_RADIUS, p.paint)
+            PointIndicatorStyle.SQUARE -> {
+                val canvasXCenter = screenXToCanvasX(p.point.x.toFloat())
+                val canvasYCenter = screenYToCanvasY(p.point.y.toFloat())
+                Log.d(TAG, "drawPointIndicator - canvas x,y: $canvasXCenter, $canvasYCenter")
+                canvas.drawRect(
+                    canvasXCenter - SQUARE_HALF_LEN,
+                    canvasYCenter - SQUARE_HALF_LEN,
+                    canvasXCenter + SQUARE_HALF_LEN,
+                    canvasYCenter + SQUARE_HALF_LEN,
+                    p.paint
+                )
+            }
+        }
+
+        if (alpha == 0 && points.first == p) {
+            Log.d(TAG, "Cleaned up fading point")
+            points.removeFirst()
         }
     }
 
@@ -171,9 +225,17 @@ class DebugCanvasOverlayView(ctx: Context, val screenSize: DisplayMetrics): View
         return y - cachedLocationInScreen[1]
     }
 
+    fun addPointIndicator(p: Point) {
+        val fc = FadingPointIndicator(p, PointIndicatorStyle.SQUARE, pointIndicatorPaint)
+        points.add(fc)
+        Log.d(TAG, "addPointIndicator at ${p.x}, ${p.y} (screen: ${screenSize.widthPixels}, ${screenSize.heightPixels})")
+        fc.attachToView(this)
+        invalidate()
+    }
+
     fun addClick(p: Point) {
-        val fc = FadingClick(p)
-        clicks.add(fc)
+        val fc = FadingPointIndicator(p, PointIndicatorStyle.CIRCLE, clickPaint)
+        points.add(fc)
         fc.attachToView(this)
         invalidate()
     }
@@ -228,12 +290,8 @@ class DebugOverlayManager(val activity: Activity): OverlayManagerBase(activity),
         Log.v(TAG, "showOverlay")
         wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-        val display = wm!!.defaultDisplay
-        val displaySize = DisplayMetrics()
-        display.getRealMetrics(displaySize)
-
 //        val overlayRoot = LayoutInflater.from(activity).inflate(R.layout.overlay_base, null)
-        val overlayRoot = DebugCanvasOverlayView(context, displaySize)
+        val overlayRoot = DebugCanvasOverlayView(context)
         val overlay = OverlayContainer(overlayRoot)
         this.overlay = overlay
 
@@ -272,18 +330,30 @@ class DebugOverlayManager(val activity: Activity): OverlayManagerBase(activity),
         }
     }
 
-    override fun onClickSent(x: Float, y: Float, isPercent: Boolean) {
+    fun getScreenPoint(x: Float, y: Float, isPercent: Boolean): Point {
         val realX: Int
         val realY: Int
         if (isPercent) {
-            realX = (overlay!!.root.screenSize.widthPixels * x).toInt()
-            realY = (overlay!!.root.screenSize.widthPixels * y).toInt()
+            realX = (overlay!!.root.screenWidth * x).toInt()
+            realY = (overlay!!.root.screenHeight * y).toInt()
         } else {
             realX = x.toInt()
             realY = y.toInt()
         }
+        return Point(realX, realY)
+    }
+
+    override fun showPointIndicator(x: Float, y: Float, isPercent: Boolean) {
+        val point = getScreenPoint(x, y, isPercent)
         activity.runOnUiThread {
-            overlay!!.root.addClick(Point(realX, realY))
+            overlay!!.root.addPointIndicator(point)
+        }
+    }
+
+    override fun onClickSent(x: Float, y: Float, isPercent: Boolean) {
+        val point = getScreenPoint(x, y, isPercent)
+        activity.runOnUiThread {
+            overlay!!.root.addClick(point)
         }
     }
 

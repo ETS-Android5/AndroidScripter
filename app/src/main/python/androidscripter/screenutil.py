@@ -55,6 +55,9 @@ def check_color_at_point(api, bm, coord, targetColorStr, portrait=True, dist=50.
    if bw < adjCoord[0] or bh < adjCoord[1]:
       api.log("coord %r is too big for bitmap %d x %d" % (adjCoord, bw, bh))
       return None
+
+   api._api.showPointIndicator(coord[0], coord[1], True)
+
    colTup = color.colorTupFromBitmapPixel(bm, adjCoord)
    targetColorTup = color.colorStrToTup(targetColorStr)
    calcDist = color.colorDist(colTup, targetColorTup)

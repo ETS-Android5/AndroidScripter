@@ -21,9 +21,6 @@ class Api:
     def get_screencap(self):
         return self._api.getScreenCap()
 
-    def do_x_search(self):
-        return self._api.doXSearch()
-
     def find_xs_in_screen(self, show_debug_overlay=True):
         return self._api.findXsInScreen(show_debug_overlay)
 

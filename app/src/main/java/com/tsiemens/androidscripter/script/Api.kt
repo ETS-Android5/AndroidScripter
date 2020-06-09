@@ -83,6 +83,7 @@ class Api(val ctx: Context,
     }
 
     interface DebugOverlayManager {
+        fun showPointIndicator(x: Float, y: Float, isPercent: Boolean = false)
         fun onClickSent(x: Float, y: Float, isPercent: Boolean = false)
         fun onXsFound(res: ScreenUtil.XDetectResult)
     }
@@ -137,11 +138,6 @@ class Api(val ctx: Context,
         return screenProvider?.getScreenCap()
     }
 
-    // TODO delete this
-    fun doXSearch() {
-        findXsInScreen()
-    }
-
     class ScreenXsResult(val xs: List<ScreenUtil.Cross>?,
                          val screenDimens: Point?,
                          val ok: Boolean)
@@ -156,7 +152,7 @@ class Api(val ctx: Context,
             }
             return ScreenXsResult(xs.xs, Point(croppedBitmap.width, croppedBitmap.height), true)
         } else {
-            Log.e(TAG, "doXSearch: could not get screen cap")
+            Log.e(TAG, "findXsInScreen: could not get screen cap")
         }
         return ScreenXsResult(null, null, false)
     }
@@ -169,6 +165,10 @@ class Api(val ctx: Context,
             return !caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
         }
         return null
+    }
+
+    fun showPointIndicator(x: Float, y: Float, isPercent: Boolean = false) {
+        debugOverlayManager?.showPointIndicator(x, y, isPercent)
     }
 
     fun sendClick(x: Float, y: Float, isPercent: Boolean = false) {
