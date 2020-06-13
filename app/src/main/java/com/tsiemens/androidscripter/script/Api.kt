@@ -2,22 +2,21 @@ package com.tsiemens.androidscripter.script
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.Point
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Handler
 import android.util.Log
-import com.tsiemens.androidscripter.DebugOverlayManager
 import com.tsiemens.androidscripter.getUsageStatsForegroundActivityName
 import com.tsiemens.androidscripter.service.ScriptAccessService
 import com.tsiemens.androidscripter.service.ServiceBcastClient
 import com.tsiemens.androidscripter.service.WindowState
 import com.tsiemens.androidscripter.util.BitmapUtil
+import com.tsiemens.androidscripter.util.ColorCompat
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.ArrayList
 import kotlin.concurrent.write
 import kotlin.math.min
 
@@ -80,10 +79,11 @@ class Api(val ctx: Context,
 
     interface OverlayManager {
         fun getOverlayDimens(): WinDimen?
+        fun onPointInspected(x: Float, y: Float, color: ColorCompat, isPercent: Boolean = true)
     }
 
     interface DebugOverlayManager {
-        fun showPointIndicator(x: Float, y: Float, isPercent: Boolean = false)
+        fun onPointInspected(x: Float, y: Float, isPercent: Boolean = false)
         fun onClickSent(x: Float, y: Float, isPercent: Boolean = false)
         fun onXsFound(res: ScreenUtil.XDetectResult)
     }
@@ -135,7 +135,11 @@ class Api(val ctx: Context,
     }
 
     fun getScreenCap(): Bitmap? {
-        return screenProvider?.getScreenCap()
+        var bm = screenProvider?.getScreenCap()
+        if (bm != null) {
+            bm = BitmapUtil.cropScreenshotPadding(bm)
+        }
+        return bm
     }
 
     class ScreenXsResult(val xs: List<ScreenUtil.Cross>?,
@@ -167,8 +171,9 @@ class Api(val ctx: Context,
         return null
     }
 
-    fun showPointIndicator(x: Float, y: Float, isPercent: Boolean = false) {
-        debugOverlayManager?.showPointIndicator(x, y, isPercent)
+    fun notifyPointInspected(x: Float, y: Float, color: ColorCompat, isPercent: Boolean = false) {
+        debugOverlayManager?.onPointInspected(x, y, isPercent)
+        overlayManager?.onPointInspected(x, y, color, isPercent)
     }
 
     fun sendClick(x: Float, y: Float, isPercent: Boolean = false) {

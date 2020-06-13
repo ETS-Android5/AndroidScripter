@@ -8,10 +8,12 @@
 
     <string-array name="overlay_displays_ids">
         <item>script_log</item>
+        <item>point_analysis</item>
         <item>ocr</item>
     </string-array>
     <string-array name="overlay_displays">
         <item>Script &amp; Log</item>
+        <item>Point Analysis</item>
         <item>Screen Text</item>
     </string-array>
 
@@ -20,4 +22,8 @@
     <string name="log">Log</string>
     <string name="title_activity_script_list">ScriptListActivity</string>
     <string name="show_overlay">Show Overlay</string>
+
+    <string name="screen_size_colon">Screen Size:</string>
+    <string name="location_colon">Location:</string>
+    <string name="color_colon">Colour:</string>
 </resources>

@@ -14,9 +14,8 @@ import android.view.View
 import android.view.WindowManager
 import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.script.ScreenUtil
+import com.tsiemens.androidscripter.util.UiUtil
 import java.util.*
-import kotlin.math.max
-import kotlin.math.min
 
 enum class PointIndicatorStyle {
     CIRCLE,
@@ -159,9 +158,7 @@ class DebugCanvasOverlayView(ctx: Context): View(ctx) {
     }
 
     private fun refreshScreenSize() {
-        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val display = wm.defaultDisplay
-        display.getRealMetrics(screenSize)
+        UiUtil.getDisplaySize(context, screenSize)
 
         if ((screenSize.widthPixels < screenSize.heightPixels) == (width < height)) {
             screenWidth = screenSize.widthPixels
@@ -182,6 +179,9 @@ class DebugCanvasOverlayView(ctx: Context): View(ctx) {
             PointIndicatorStyle.SQUARE -> {
                 val canvasXCenter = screenXToCanvasX(p.point.x.toFloat())
                 val canvasYCenter = screenYToCanvasY(p.point.y.toFloat())
+                Log.d(TAG, "drawPointIndicator - canvasSize: ${canvas.width}x${canvas.height} "+
+                                "canvasPos: ${cachedLocationInScreen[0]}x${cachedLocationInScreen[1]} " +
+                                "screen: $screenWidth x $screenHeight")
                 Log.d(TAG, "drawPointIndicator - canvas x,y: $canvasXCenter, $canvasYCenter")
                 canvas.drawRect(
                     canvasXCenter - SQUARE_HALF_LEN,
@@ -334,8 +334,8 @@ class DebugOverlayManager(val activity: Activity): OverlayManagerBase(activity),
         val realX: Int
         val realY: Int
         if (isPercent) {
-            realX = (overlay!!.root.screenWidth * x).toInt()
-            realY = (overlay!!.root.screenHeight * y).toInt()
+            realX = ((overlay!!.root.screenWidth - 1) * x).toInt()
+            realY = ((overlay!!.root.screenHeight - 1) * y).toInt()
         } else {
             realX = x.toInt()
             realY = y.toInt()
@@ -343,7 +343,7 @@ class DebugOverlayManager(val activity: Activity): OverlayManagerBase(activity),
         return Point(realX, realY)
     }
 
-    override fun showPointIndicator(x: Float, y: Float, isPercent: Boolean) {
+    override fun onPointInspected(x: Float, y: Float, isPercent: Boolean) {
         val point = getScreenPoint(x, y, isPercent)
         activity.runOnUiThread {
             overlay!!.root.addPointIndicator(point)

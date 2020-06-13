@@ -1,24 +1,22 @@
 package com.tsiemens.androidscripter
 
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
+import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.graphics.*
 import android.os.Build
-import android.provider.Settings
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.*
-import android.widget.TextView
 import android.view.MotionEvent
 import android.view.WindowManager
-import android.widget.AdapterView
-import android.widget.Button
-import android.widget.Spinner
+import android.widget.*
 import com.tsiemens.androidscripter.script.Api
+import com.tsiemens.androidscripter.util.ColorCompat
 import com.tsiemens.androidscripter.util.UiUtil
 import com.tsiemens.androidscripter.widget.ScriptController
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
-import java.lang.IllegalStateException
 import kotlin.math.max
 
 class OverlayContainer(val root: View) {
@@ -27,7 +25,7 @@ class OverlayContainer(val root: View) {
 }
 
 // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
-class OverlayManager(context: Context): OverlayManagerBase(context), Api.OverlayManager {
+class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.OverlayManager {
     companion object {
         val TAG = OverlayManager::class.java.simpleName
     }
@@ -99,8 +97,12 @@ class OverlayManager(context: Context): OverlayManagerBase(context), Api.Overlay
                 val ids = context.resources.getStringArray(R.array.overlay_displays_ids)
                 when (ids[pos]) {
                     "script_log" -> changePanelVisibility(R.id.overlay_log_panel)
+                    "point_analysis" -> changePanelVisibility(R.id.overlay_point_analysis_panel)
                     "ocr" -> changePanelVisibility(R.id.overlay_ocr_panel)
-                    else -> throw IllegalStateException("Invalid id ${ids[pos]}")
+                    else -> {
+                        Log.d(TAG, "Overlay spinner onItemSelected: Invalid id ${ids[pos]}")
+                        Toast.makeText(this@OverlayManager.context, "Error: Invalid Id", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
@@ -143,6 +145,7 @@ class OverlayManager(context: Context): OverlayManagerBase(context), Api.Overlay
         if (overlay != null) {
             val panelIds = arrayOf(
                 R.id.overlay_log_panel,
+                R.id.overlay_point_analysis_panel,
                 R.id.overlay_ocr_panel)
             panelIds.forEach { id ->
                 val panel = overlay!!.root.findViewById<View>(id)
@@ -150,6 +153,25 @@ class OverlayManager(context: Context): OverlayManagerBase(context), Api.Overlay
             }
         }
     }
+
+    // ************************* Screen Analysis methods *****************************
+    @SuppressLint("SetTextI18n")
+    fun updatePointDebugText(point: Point, screenSize: DisplayMetrics, color: ColorCompat) {
+        overlay!!.root.findViewById<TextView>(R.id.screen_size_tv).setText(
+            "${screenSize.widthPixels}x${screenSize.heightPixels}")
+
+        overlay!!.root.findViewById<TextView>(R.id.location_coords_tv).setText(
+            "${point.x}x${point.y}")
+
+        overlay!!.root.findViewById<TextView>(R.id.color_code_tv).setText("#$color")
+        overlay!!.root.findViewById<TextView>(R.id.color_square_tv).setTextColor(color.value)
+    }
+
+    fun updateScreenCaptureViewer(bm: Bitmap) {
+        overlay!!.root.findViewById<ImageView>(R.id.bitmap_imgview).setImageBitmap(bm)
+    }
+
+    // ************************* END Point Analysis methods *****************************
 
     fun updateOcrText(text: String) {
         if (overlay != null) {
@@ -196,6 +218,24 @@ class OverlayManager(context: Context): OverlayManagerBase(context), Api.Overlay
         return null
     }
 
+    override fun onPointInspected(x: Float, y: Float, color: ColorCompat, isPercent: Boolean) {
+        val screenSize = UiUtil.getDisplaySize(context)
+
+        val realX: Int
+        val realY: Int
+        if (isPercent) {
+            realX = ((screenSize.widthPixels - 1) * x).toInt()
+            realY = ((screenSize.heightPixels - 1) * y).toInt()
+        } else {
+            realX = x.toInt()
+            realY = y.toInt()
+        }
+        val point = Point(realX, realY)
+
+        activity.runOnUiThread {
+            updatePointDebugText(point, screenSize, color)
+        }
+    }
 }
 
 class ViewDragger(val params: WindowManager.LayoutParams,

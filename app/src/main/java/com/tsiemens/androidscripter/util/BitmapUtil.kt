@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.Surface
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.random.Random
 
 class BitmapUtil {
     companion object {
@@ -116,5 +117,13 @@ class BitmapUtil {
                                         width - leftPadding - rightPadding,
                                         height - topPadding - bottomPadding)
         }
-    }
+
+        // Used by color.py
+        fun getPixelColor(x: Int, y: Int, bm: Bitmap): ColorCompat {
+            val pixInt = bm.getPixel(x, y)
+            val color = ColorCompat(pixInt)
+            return color
+        }
+
+    } // companion
 }

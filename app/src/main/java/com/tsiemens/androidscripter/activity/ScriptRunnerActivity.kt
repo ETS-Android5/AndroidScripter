@@ -492,6 +492,12 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         }
         lastRetrievedScreencapId = lastScreencapId
 
+        if (lastScreencap != null) {
+            runOnUiThread {
+                overlayManager.updateScreenCaptureViewer(lastScreencap!!)
+            }
+        }
+
         return lastScreencap
     }
 }

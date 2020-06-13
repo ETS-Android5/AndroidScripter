@@ -169,6 +169,69 @@
                     </ScrollView>
                 </LinearLayout>
 
+                <!-- Point Analysis -->
+                <LinearLayout
+                        android:id="@+id/overlay_point_analysis_panel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
+
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/screen_size_colon"
+                                android:layout_marginEnd="5dp"/>
+                        <TextView
+                                android:id="@+id/screen_size_tv"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/location_colon"
+                                android:layout_marginEnd="5dp"/>
+                        <TextView
+                                android:id="@+id/location_coords_tv"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/color_colon"
+                                android:layout_marginEnd="5dp"/>
+                        <TextView
+                                android:id="@+id/color_code_tv"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+                        <TextView
+                                android:id="@+id/color_square_tv"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="20dp"
+                                android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                                android:text="\u25A0">
+                        </TextView>
+                    </LinearLayout>
+                    <ImageView
+                            android:id="@+id/bitmap_imgview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+                </LinearLayout>
+
                 <!-- OCR -->
                 <LinearLayout
                         android:id="@+id/overlay_ocr_panel"

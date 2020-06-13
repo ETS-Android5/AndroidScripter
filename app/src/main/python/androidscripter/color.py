@@ -4,20 +4,29 @@ _jColor = None
 def jColor():
     global _jColor
     if _jColor is None:
-        _jColor = java.jclass("android.graphics.Color")
+        _jColor = java.jclass("com.tsiemens.androidscripter.util.ColorCompat")
     return _jColor
 
-def colorFromInt(num):
-    return jColor().valueOf(java.jint(num))
+def jColorStatic():
+    return jColor().Companion
 
-def floatTo255(flt):
-   """Convert a number from 0 to 1 to 0 to 255"""
-   return int(255 * flt)
+_jBitmapUtil = None
+def jBitmapUtil():
+    global _jBitmapUtil
+    if _jBitmapUtil is None:
+        _jBitmapUtil = java.jclass("com.tsiemens.androidscripter.util.BitmapUtil")
+    return _jBitmapUtil.Companion
+
+def colorFromInt(num):
+    return jColor()(java.jint(num))
 
 def colorToColorTup(colObj):
-   return (floatTo255(colObj.red()),
-           floatTo255(colObj.green()),
-           floatTo255(colObj.blue()))
+   return (colObj.red(),
+           colObj.green(),
+           colObj.blue())
+
+def colorTupToColor(colTup):
+    return jColorStatic().rgb(colTup[0], colTup[1], colTup[2])
 
 def tupToColorStr(tup):
     """Takes a 255, 255, 255 based tuple, and converts it to
@@ -39,6 +48,5 @@ def colorDist(col1Tup, col2Tup):
    return ((dr**2) + (dg**2) + (db**2))**(0.5)
 
 def colorTupFromBitmapPixel(bitmap, coord):
-    pix = bitmap.getPixel(int(coord[0]), int(coord[1]))
-    col = colorFromInt(pix)
+    col = jBitmapUtil().getPixelColor(coord[0], coord[1], bitmap)
     return colorToColorTup(col)
