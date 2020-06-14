@@ -72,6 +72,10 @@ class BitmapUtil {
             val height = bitmap.height
             val width = bitmap.width
 
+            if (height == 0 || width == 0) {
+                return bitmap
+            }
+
             var leftPadding = 0
             while (leftPadding < width) {
                 val pix = bitmap.getPixel(leftPadding, height / 2)
@@ -91,7 +95,7 @@ class BitmapUtil {
             }
 
             var topPadding = 0
-            while (topPadding < width) {
+            while (topPadding < height) {
                 val pix = bitmap.getPixel(width / 2, topPadding)
                 if (Color.alpha(pix) != 0) {
                     break
@@ -100,7 +104,7 @@ class BitmapUtil {
             }
 
             var bottomPadding = 0
-            while (bottomPadding < width) {
+            while (bottomPadding < height) {
                 val pix = bitmap.getPixel(width / 2, height - 1 - bottomPadding)
                 if (Color.alpha(pix) != 0) {
                     break
