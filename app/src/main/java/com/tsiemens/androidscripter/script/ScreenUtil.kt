@@ -304,7 +304,7 @@ class ScreenUtil {
         }
 
         override fun toString(): String {
-            return "nw: $nw\nne: ${ne.toString()}\nse: ${se.toString()}\nsw: ${sw.toString()}"
+            return "center: ${center()}\nnw: $nw\nne: ${ne.toString()}\nse: ${se.toString()}\nsw: ${sw.toString()}"
         }
     }
 

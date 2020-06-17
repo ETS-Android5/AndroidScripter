@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Point
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.util.DisplayMetrics
 import android.util.Log
 import com.tsiemens.androidscripter.getUsageStatsForegroundActivityName
 import com.tsiemens.androidscripter.service.ScriptAccessService
@@ -13,6 +14,7 @@ import com.tsiemens.androidscripter.service.ServiceBcastClient
 import com.tsiemens.androidscripter.service.WindowState
 import com.tsiemens.androidscripter.util.BitmapUtil
 import com.tsiemens.androidscripter.util.ColorCompat
+import com.tsiemens.androidscripter.util.UiUtil
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -143,8 +145,17 @@ class Api(val ctx: Context,
     }
 
     class ScreenXsResult(val xs: List<ScreenUtil.Cross>?,
-                         val screenDimens: Point?,
-                         val ok: Boolean)
+                         val screenCapImgDimens: Point?,
+                         val screenDimens: DisplayMetrics?,
+                         val ok: Boolean) {
+        fun getXScreenRelativeCenter(x: ScreenUtil.Cross): org.opencv.core.Point {
+            val center = x.center()
+            return org.opencv.core.Point(
+                (center.x / screenCapImgDimens!!.x) * screenDimens!!.widthPixels,
+                (center.y / screenCapImgDimens.y) * screenDimens.heightPixels
+            )
+        }
+    }
 
     fun findXsInScreen(showDebugOverlay: Boolean = true): ScreenXsResult {
         val bm = getScreenCap()
@@ -154,11 +165,12 @@ class Api(val ctx: Context,
             if (showDebugOverlay) {
                 debugOverlayManager?.onXsFound(xs)
             }
-            return ScreenXsResult(xs.xs, Point(croppedBitmap.width, croppedBitmap.height), true)
+            return ScreenXsResult(xs.xs, Point(croppedBitmap.width, croppedBitmap.height),
+                                  UiUtil.getDisplaySize(ctx), true)
         } else {
             Log.e(TAG, "findXsInScreen: could not get screen cap")
         }
-        return ScreenXsResult(null, null, false)
+        return ScreenXsResult(null, null, null, false)
     }
 
     fun isNetworkMetered(): Boolean? {

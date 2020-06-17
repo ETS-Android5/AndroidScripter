@@ -112,20 +112,22 @@ class BitmapUtil {
                 bottomPadding++
             }
 
+            val newWidth = width - leftPadding - rightPadding
+            val newHeight = height - topPadding - bottomPadding
+
             Log.d(TAG, "cropScreenshotPadding: stripping padding: " +
-                  "left $leftPadding right $rightPadding top $topPadding bottom $bottomPadding")
+                  "left $leftPadding right $rightPadding top $topPadding bottom $bottomPadding. " +
+                  " bitmap dimens tranform: ${width}x${height} -> ${newWidth}x${newHeight}")
             if (leftPadding == 0 && rightPadding == 0 && topPadding == 0 && bottomPadding == 0) {
                 return bitmap
             }
-            if ((leftPadding + rightPadding) >= width || (topPadding + bottomPadding) >= height) {
+            if (newWidth <= 0 || newHeight <= 0) {
                 // Padding stretched the entire width or height of the image (possibly it was
                 // entirely transparent). Just return the original.
                 Log.d(TAG, "Warning: Entire bitmap was padding")
                 return bitmap
             }
-            return Bitmap.createBitmap(bitmap, leftPadding, topPadding,
-                                        width - leftPadding - rightPadding,
-                                        height - topPadding - bottomPadding)
+            return Bitmap.createBitmap(bitmap, leftPadding, topPadding, newWidth, newHeight)
         }
 
         // Used by color.py
