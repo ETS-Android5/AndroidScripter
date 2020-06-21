@@ -3,9 +3,9 @@ package com.tsiemens.androidscripter.activity
 import android.graphics.Bitmap
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AlertDialog
-import android.support.v7.widget.AppCompatImageButton
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.AppCompatImageButton
+import androidx.appcompat.widget.Toolbar
 import android.util.Log
 import android.view.View
 import com.tsiemens.androidscripter.*

@@ -1,6 +1,6 @@
 package com.tsiemens.androidscripter.widget
 
-import android.support.v7.widget.AppCompatImageButton
+import androidx.appcompat.widget.AppCompatImageButton
 import android.util.Log
 import android.view.View
 import android.widget.ScrollView

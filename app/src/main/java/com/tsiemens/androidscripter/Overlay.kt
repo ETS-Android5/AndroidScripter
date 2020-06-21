@@ -168,7 +168,7 @@ class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.
     }
 
     fun updateScreenCaptureViewer(bm: Bitmap) {
-        overlay!!.root.findViewById<ImageView>(R.id.bitmap_imgview).setImageBitmap(bm)
+        overlay?.root?.findViewById<ImageView>(R.id.bitmap_imgview)?.setImageBitmap(bm)
     }
 
     // ************************* END Point Analysis methods *****************************

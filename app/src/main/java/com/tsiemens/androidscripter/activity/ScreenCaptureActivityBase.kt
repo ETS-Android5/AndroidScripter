@@ -13,7 +13,7 @@ import android.graphics.Point
 import android.media.Image
 import android.media.ImageReader
 import android.os.Handler
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import com.tsiemens.androidscripter.util.BitmapUtil
 import com.tsiemens.androidscripter.util.NTObjPtr

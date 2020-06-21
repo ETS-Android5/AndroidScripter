@@ -15,21 +15,21 @@
             android:text="[script name]"/>
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content">
-        <android.support.v7.widget.AppCompatImageButton
+        <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/start_pause_button"
                 style="@style/ScriptControlButtonStyle"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/ic_play_arrow_black_48dp"
                 />
 
-        <android.support.v7.widget.AppCompatImageButton
+        <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/stop_button"
                 style="@style/ScriptControlButtonStyle"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/ic_stop_black_48dp"
                 />
 
-        <android.support.v7.widget.AppCompatImageButton
+        <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/restart_button"
                 style="@style/ScriptControlButtonStyle"
                 android:src="@drawable/ic_replay_black_48dp"

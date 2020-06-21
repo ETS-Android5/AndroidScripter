@@ -11,13 +11,13 @@ import android.graphics.Path
 import android.graphics.Point
 import android.os.Bundle
 import android.os.Handler
-import android.support.v4.app.DialogFragment
-import android.support.v7.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.appcompat.app.AlertDialog
 import android.util.Log
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.support.v4.content.LocalBroadcastManager
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.tsiemens.androidscripter.launchAccessibilitySettings
 
 class NodeHandle(val node : AccessibilityNodeInfo) {

@@ -5,7 +5,7 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Environment
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.util.Log
 import com.googlecode.tesseract.android.TessBaseAPI
 import com.tsiemens.androidscripter.storage.StorageUtil

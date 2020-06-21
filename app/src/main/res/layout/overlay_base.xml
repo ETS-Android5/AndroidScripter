@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -9,7 +9,7 @@
         android:backgroundTint="@color/cardBackground"
         >
 
-    <android.support.constraint.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:orientation="vertical"
@@ -60,19 +60,19 @@
                 app:layout_constraintVertical_bias="0.0"
                 >
 
-            <android.support.v7.widget.AppCompatImageButton
+            <androidx.appcompat.widget.AppCompatImageButton
                     android:id="@+id/start_pause_button"
                     style="@style/ScriptControlButtonStyle"
                     android:src="@drawable/ic_play_arrow_black_48dp"
                     />
 
-            <android.support.v7.widget.AppCompatImageButton
+            <androidx.appcompat.widget.AppCompatImageButton
                     android:id="@+id/stop_button"
                     style="@style/ScriptControlButtonStyle"
                     android:src="@drawable/ic_stop_black_48dp"
                     />
 
-            <android.support.v7.widget.AppCompatImageButton
+            <androidx.appcompat.widget.AppCompatImageButton
                     android:id="@+id/restart_button"
                     style="@style/ScriptControlButtonStyle"
                     android:src="@drawable/ic_replay_black_48dp"
@@ -80,7 +80,7 @@
 
         </LinearLayout>
 
-        <android.support.v7.widget.AppCompatImageButton
+        <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/overlay_close_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
@@ -97,7 +97,7 @@
                 app:layout_constraintVertical_bias="0.0"
                 android:contentDescription="Close Overlay" />
 
-        <android.support.constraint.ConstraintLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/overlay_details_all"
                 android:layout_width="300dp"
                 android:layout_height="300dp"
@@ -283,8 +283,8 @@
                     app:layout_constraintRight_toRightOf="parent"
                     android:contentDescription="Resize Handle"/>
 
-        </android.support.constraint.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </android.support.constraint.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-</android.support.v7.widget.CardView>
+</androidx.cardview.widget.CardView>

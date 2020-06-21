@@ -7,7 +7,7 @@ import android.content.Intent
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.Looper
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import android.text.format.Formatter
 import android.util.Log
 import android.view.View
