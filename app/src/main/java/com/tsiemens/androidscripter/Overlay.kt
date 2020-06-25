@@ -19,15 +19,17 @@ import com.tsiemens.androidscripter.widget.ScriptController
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
 import kotlin.math.max
 
-class OverlayContainer(val root: View) {
-    val spinner = root.findViewById<Spinner>(R.id.overlay_detail_spinner)
-    val logTv = root.findViewById<TextView>(R.id.log_tv)
+class OverlayContainer(val root: View,
+                       val positionParams: WindowManager.LayoutParams) {
+    val sizeFrame = root.findViewById<View>(R.id.overlay_details_all)!!
+    val spinner = root.findViewById<Spinner>(R.id.overlay_detail_spinner)!!
+    val logTv = root.findViewById<TextView>(R.id.log_tv)!!
 }
 
 // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
 class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.OverlayManager {
     companion object {
-        val TAG = OverlayManager::class.java.simpleName
+        val TAG: String = OverlayManager::class.java.simpleName
     }
 
     private var wm: WindowManager? = null
@@ -44,8 +46,6 @@ class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.
         }
         Log.v(TAG, "showOverlay")
         val overlayRoot = LayoutInflater.from(context).inflate(R.layout.overlay_base, null)
-        val overlay = OverlayContainer(overlayRoot)
-        this.overlay = overlay
         overlayRoot!!.findViewById<View>(R.id.overlay_details_all).visibility = View.GONE
 
         params = WindowManager.LayoutParams(
@@ -61,7 +61,10 @@ class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.
         wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         wm!!.addView(overlayRoot, params)
 
-        val handle = overlayRoot.findViewById<View>(R.id.overlay_handle)
+        val newOverlay = OverlayContainer(overlayRoot, params!!)
+        this.overlay = newOverlay
+
+        val sizePositionController = OverlaySizeAndPositionController(newOverlay, activity, wm!!)
 
         val expander = overlayRoot.findViewById<View>(R.id.overlay_expand)
         expander.setOnClickListener {
@@ -87,9 +90,9 @@ class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.
             onDestroyListener?.let { it1 -> it1() }
         }
 
-        overlay.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+        newOverlay.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
             override fun onNothingSelected(parent: AdapterView<*>?) {
-                overlay.spinner.setSelection(0)
+                newOverlay.spinner.setSelection(0)
             }
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
@@ -112,11 +115,11 @@ class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.
             updateOcrText("")
         }
 
-        handle.setOnTouchListener(ViewDragger(params!!, overlayRoot, wm!!))
+        val handle = overlayRoot.findViewById<View>(R.id.overlay_handle)
+        handle.setOnTouchListener(ViewDragger(sizePositionController))
 
-        val sizeFrame = overlayRoot.findViewById<View>(R.id.overlay_details_all)
         val sizeHandle = overlayRoot.findViewById<View>(R.id.overlay_sizing_handle)
-        sizeHandle.setOnTouchListener(ViewResizer(sizeFrame, wm!!))
+        sizeHandle.setOnTouchListener(ViewResizer(newOverlay.sizeFrame, wm!!))
 
         val screenSize = Point()
         wm!!.defaultDisplay.getSize(screenSize)
@@ -125,9 +128,11 @@ class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.
         wm!!.updateViewLayout(overlayRoot, params)
 
         // Limit the default width of the overlay
-        val sizeFrameParams = sizeFrame.layoutParams
+        val sizeFrameParams = newOverlay.sizeFrame.layoutParams
         val largestScreenLength = max(screenSize.x, screenSize.y)
         sizeFrameParams.width = (largestScreenLength * 0.4).toInt()
+
+        overlayRoot.addOnLayoutChangeListener(OverlayRootListener(sizePositionController))
     }
 
     override fun started(): Boolean {
@@ -238,52 +243,127 @@ class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.
     }
 }
 
-class ViewDragger(val params: WindowManager.LayoutParams,
-                  val view: View,
-                  val wm: WindowManager): View.OnTouchListener {
+open class MobileViewChangerBase(val overlayContainer: OverlayContainer,
+                                 val context: Context,
+                                 val wm: WindowManager) {
+    val cachedDisplaySize = DisplayMetrics()
+    val cachedLocationInScreen = IntArray(2)
+
     companion object {
         val TAG = OverlayManager::class.java.simpleName
     }
+
+    fun posParams(): WindowManager.LayoutParams {
+        return overlayContainer.positionParams
+    }
+
+    fun view(): View {
+        return overlayContainer.root
+    }
+
+    fun refreshDisplaySizeCache() {
+        UiUtil.getDisplaySize(context, cachedDisplaySize)
+    }
+
+    fun refreshLocationOnScreenCache() {
+        overlayContainer.root.getLocationOnScreen(cachedLocationInScreen)
+    }
+
+    fun getPixelsPastBottom(): Int {
+        refreshDisplaySizeCache()
+        // Note this is not perfect. If the overlay root's 0,0 isn't padded in (due to the status bar),
+        // this value won't quite be precise. Could be improved later, but in terms of "usability",
+        // this appears to be mostly good enough for now.
+        return posParams().y + overlayContainer.root.height - cachedDisplaySize.heightPixels
+    }
+
+    fun updateRootPosition(x: Int, y: Int) {
+        overlayContainer.positionParams.x = x
+        overlayContainer.positionParams.y = y
+        wm.updateViewLayout(overlayContainer.root, overlayContainer.positionParams)
+    }
+}
+
+class OverlaySizeAndPositionController(overlayContainer: OverlayContainer,
+                                       context: Context,
+                                       wm: WindowManager):
+    MobileViewChangerBase(overlayContainer, context, wm) {
+
+    // *****************************
+    // Drag touch state
+    // *****************************
     var xOnDown: Int = 0
     var yOnDown: Int = 0
     var touchX: Float = 0f
     var touchY: Float = 0f
+    var beingTouched = false
 
-    @SuppressWarnings("ClickableViewAccessibility")
-    override fun onTouch(v: View, event: MotionEvent): Boolean {
+    fun onDragHandleTouch(v: View, event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                xOnDown = params.x
-                yOnDown = params.y
+                beingTouched = true
+                // We have to use these, because view().x/y is always 0 for this overlay, for some
+                // reason.
+                xOnDown = posParams().x
+                yOnDown = posParams().y
                 touchX = event.rawX
                 touchY = event.rawY
                 return true
             }
             MotionEvent.ACTION_UP -> {
+                beingTouched = false
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
-                params.x = xOnDown + (event.rawX - touchX).toInt()
-                params.y = yOnDown + (event.rawY - touchY).toInt()
-                wm.updateViewLayout(view, params)
+                val newX = xOnDown + (event.rawX - touchX).toInt()
+                val newY = yOnDown + (event.rawY - touchY).toInt()
+                updateRootPosition(newX, newY)
                 return true
             }
         }
         return false
     }
+
+    fun onRootLayoutChange() {
+        if (beingTouched) {
+            return
+        }
+
+        // Note that these distances past the border are often not visible. When the positionParams
+        // specifies a value too large, generally what would happens is that it just gets stuck
+        // at the edge.
+        var didChange = false
+        val pixelsPastBottom = getPixelsPastBottom()
+        val newX = posParams().x
+        var newY = posParams().y
+        if (pixelsPastBottom > 0) {
+            newY = max(0, posParams().y - pixelsPastBottom)
+            didChange = true
+        }
+        if (didChange) {
+            Log.d(TAG, "onRootLayoutChange: fixing position")
+            updateRootPosition(newX, newY)
+        }
+    }
+}
+
+class ViewDragger(val controller: OverlaySizeAndPositionController):
+    View.OnTouchListener {
+
+    @SuppressWarnings("ClickableViewAccessibility")
+    override fun onTouch(v: View, event: MotionEvent): Boolean {
+        return controller.onDragHandleTouch(v, event)
+    }
 }
 
 class ViewResizer(val targetView: View,
                   val wm: WindowManager): View.OnTouchListener {
-    companion object {
-        val TAG = ViewResizer::class.java.simpleName
-    }
     var widthOnDown: Int = 0
     var heightOnDown: Int = 0
     var touchX: Float = 0f
     var touchY: Float = 0f
 
-    private fun correctTargetViewSize(): ViewGroup.LayoutParams {
+    private fun fixTargetViewSize(): ViewGroup.LayoutParams {
         val params = targetView.layoutParams
         val parent = targetView.parent as ViewGroup
         params.width = targetView.width
@@ -297,7 +377,7 @@ class ViewResizer(val targetView: View,
     override fun onTouch(v: View, event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                val params = correctTargetViewSize()
+                val params = fixTargetViewSize()
                 widthOnDown = params.width
                 heightOnDown = params.height
                 touchX = event.rawX
@@ -305,7 +385,7 @@ class ViewResizer(val targetView: View,
                 return true
             }
             MotionEvent.ACTION_UP -> {
-                correctTargetViewSize()
+                fixTargetViewSize()
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
@@ -318,4 +398,14 @@ class ViewResizer(val targetView: View,
         }
         return false
     }
+}
+
+class OverlayRootListener(val controller: OverlaySizeAndPositionController):
+    View.OnLayoutChangeListener {
+
+    override fun onLayoutChange(p0: View?, p1: Int, p2: Int, p3: Int, p4: Int,
+                                p5: Int, p6: Int, p7: Int, p8: Int) {
+        controller.onRootLayoutChange()
+    }
+
 }
