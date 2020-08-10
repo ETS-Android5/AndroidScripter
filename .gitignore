@@ -2,6 +2,7 @@
 .gradle
 /local.properties
 /.idea/workspace.xml
+/.idea/assetWizardSettings.xml
 .idea/markdown*
 /.idea/modules.xml
 /.idea/libraries
