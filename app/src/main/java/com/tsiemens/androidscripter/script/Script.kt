@@ -32,7 +32,8 @@ class Script(context: Context, modName: String, scriptCode: String) {
                 api.logInternal("SCRIPT INTERRUPTED")
             } else {
                 Log.e(TAG, e.message)
-                api.logInternal("SCRIPT EXCEPTION: ${e.message}")
+                api.logInternal("SCRIPT EXCEPTION: ${e.message}",
+                    level=Api.LogLevel.ERROR)
             }
         }
     }

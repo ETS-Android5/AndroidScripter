@@ -1,9 +1,36 @@
+import java
+
 class Api:
+    _jLogLevel = java.jclass("com.tsiemens.androidscripter.script.Api$LogLevel")
+
     def __init__(self, api):
         self._api = api
 
-    def log(self, string):
-        self._api.log(string)
+    @staticmethod
+    def _logLevel(lvlStr):
+        if lvlStr == 'D':
+            return Api._jLogLevel.DEBUG
+        elif lvlStr == 'V':
+            return Api._jLogLevel.VERBOSE
+        elif lvlStr == 'W':
+            return Api._jLogLevel.WARNING
+        elif lvlStr == 'E':
+            return Api._jLogLevel.ERROR
+        return Api._jLogLevel.INFO
+
+    def log(self, string, level='I'):
+        self._api.log(string, Api._logLevel(level))
+
+    def logd(self, string):
+        self.log(string, level='D')
+    def logv(self, string):
+        self.log(string, level='V')
+    def logi(self, string):
+        self.log(string, level='I')
+    def logw(self, string):
+        self.log(string, level='W')
+    def loge(self, string):
+        self.log(string, level='E')
 
     def sleep(self, seconds):
         self._api.sleep(seconds)

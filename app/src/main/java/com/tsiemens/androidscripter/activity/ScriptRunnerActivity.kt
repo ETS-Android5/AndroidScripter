@@ -413,7 +413,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                 scriptUIControllers.notifyScriptStateChanged()
                 scriptThread!!.start()
             } catch (e: PyException) {
-                onLogChanged(Api.LogEntry("ERROR: ${e.message}"))
+                onLogChanged(
+                    Api.LogEntry("ERROR: ${e.message}", Api.LogLevel.ERROR))
             }
         }
     }
@@ -487,7 +488,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
         if (lastScreencapId == lastRetrievedScreencapId) {
             val msg = "WARN: Last screencap has not changed since last request"
-            onLogChanged(Api.LogEntry(msg))
+            onLogChanged(Api.LogEntry(msg, Api.LogLevel.WARNING))
             Log.w(TAG, msg)
         }
         lastRetrievedScreencapId = lastScreencapId

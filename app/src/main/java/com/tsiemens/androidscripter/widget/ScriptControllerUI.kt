@@ -8,6 +8,8 @@ import android.widget.TextView
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.script.Api
 import android.content.Context
+import android.text.Html
+import android.text.Spanned
 import com.tsiemens.androidscripter.util.DrawableUtil
 import com.tsiemens.androidscripter.util.UiUtil.Companion.forceToMainThread
 
@@ -83,8 +85,22 @@ class ScriptControllerUIHelper(val context: Context,
         setButtonEnabled(restartButton, runnable && scriptState != ScriptState.stopped, R.drawable.ic_replay_black_48dp)
     }
 
+    private fun logHtml(log: Api.LogEntry): Spanned? {
+        val colour = when(log.level) {
+            Api.LogLevel.DEBUG -> "#999999"
+            Api.LogLevel.VERBOSE -> "#666666"
+            Api.LogLevel.INFO -> "black"
+            Api.LogLevel.WARNING -> "#f48024"
+            Api.LogLevel.ERROR -> "red"
+        }
+        return Html.fromHtml(
+            "<span style=\"color:$colour\">${log.toString()}</span><br>",
+            Html.FROM_HTML_MODE_COMPACT)
+
+    }
+
     fun onLog(newLog: Api.LogEntry) {
-        logText.append(newLog.toString() + "\n")
+        logText.append(logHtml(newLog))
         val nChars = logText.length()
         if (nChars > MAX_LOG_SIZE_CHARS) {
             val nCharsToDrop = nChars - LOG_TRIM_TO_CHARS

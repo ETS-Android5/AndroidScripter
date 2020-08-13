@@ -28,7 +28,6 @@ class Api(val ctx: Context,
           val screenProvider: ScreenProvider?,
           val overlayManager: OverlayManager?,
           val debugOverlayManager: DebugOverlayManager?) {
-    val logLock = ReentrantReadWriteLock()
     val paused = AtomicBoolean(false)
 
     val serviceClient = ServiceBcastClient(ctx)
@@ -46,7 +45,11 @@ class Api(val ctx: Context,
         }
     }
 
-    class LogEntry(val message: String) {
+    enum class LogLevel {
+        DEBUG, VERBOSE, INFO, WARNING, ERROR
+    }
+
+    class LogEntry(val message: String, val level: LogLevel) {
         val time = System.currentTimeMillis()
 
         fun prettyTime(): String {
@@ -57,8 +60,6 @@ class Api(val ctx: Context,
             return "${prettyTime()}: $message"
         }
     }
-
-    val logLines = arrayListOf<LogEntry>()
 
     interface LogChangeListener {
         fun onLogChanged(newLog: LogEntry)
@@ -205,16 +206,13 @@ class Api(val ctx: Context,
         serviceClient.pressRecentApps()
     }
 
-    fun logInternal(str: String) {
-        val newLog = LogEntry(str)
-        logLock.write {
-            logLines.add(LogEntry(str))
-        }
+    fun logInternal(str: String, level: LogLevel = LogLevel.INFO) {
+        val newLog = LogEntry(str, level)
         logChangeListener?.onLogChanged(newLog)
     }
 
-    fun log(str: String) {
-        logInternal(str)
+    fun log(str: String, level: LogLevel = LogLevel.INFO) {
+        logInternal(str, level)
         handlePendingSignals()
     }
 
