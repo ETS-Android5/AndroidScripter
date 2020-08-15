@@ -8,10 +8,13 @@ import android.widget.TextView
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.script.Api
 import android.content.Context
-import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import android.text.Html
 import android.text.Spanned
+import android.widget.AdapterView
+import android.widget.Spinner
+import com.tsiemens.androidscripter.script.ScriptLogLevelListener
+import com.tsiemens.androidscripter.script.ScriptLogManager
 import com.tsiemens.androidscripter.util.DrawableUtil
 import com.tsiemens.androidscripter.util.UiUtil.Companion.forceToMainThread
 
@@ -41,7 +44,9 @@ class ScriptControllerUIHelper(val context: Context,
                                val restartButton: AppCompatImageButton,
                                val logText: TextView,
                                val logScrollView: ScrollView,
-                               val controller: ScriptController) {
+                               val logLevelSpinner: Spinner?,
+                               val logManager: ScriptLogManager,
+                               val controller: ScriptController) : ScriptLogLevelListener {
 
     companion object {
         val TAG = ScriptControllerUIHelper::class.java.simpleName
@@ -66,6 +71,26 @@ class ScriptControllerUIHelper(val context: Context,
 
         val logTextSize = PreferenceManager.getDefaultSharedPreferences(context).getInt("log_text_size", 12)
         logText.textSize = logTextSize.toFloat()
+
+        if (logLevelSpinner != null) {
+            logLevelSpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(p0: AdapterView<*>?) {}
+
+                override fun onItemSelected(spinner: AdapterView<*>?, v: View?, i: Int, l: Long) {
+                    val level = Api.LogLevel.values()[i]
+                    onLogLevelSpinnerSelected(level)
+                }
+            }
+
+            val level = Api.LogLevel.values()[logLevelSpinner.selectedItemPosition]
+            onLogLevelSpinnerSelected(level)
+        }
+
+        logManager.addLogLevelListener(this)
+        onLogLevelChanged(logManager.logLevel)
+        if (logText.text == "") {
+            repopulateLogView()
+        }
 
         notifyScriptStateChanged()
     }
@@ -106,6 +131,9 @@ class ScriptControllerUIHelper(val context: Context,
     }
 
     fun onLog(newLog: Api.LogEntry) {
+        if (!logManager.levelEnabled(newLog.level)) {
+            return
+        }
         logText.append(logHtml(newLog))
         val nChars = logText.length()
         if (nChars > MAX_LOG_SIZE_CHARS) {
@@ -121,6 +149,26 @@ class ScriptControllerUIHelper(val context: Context,
             val bottom = lastChild.bottom + paddingBottom
             val delta = bottom - (scrollY+ height)
             smoothScrollBy(0, delta)
+        }
+    }
+
+    fun repopulateLogView() {
+        logText.text = ""
+        for (log in logManager.logSequence()) {
+            onLog(log)
+        }
+    }
+
+    fun onLogLevelSpinnerSelected(level: Api.LogLevel) {
+        logManager.changeLogLevel(level)
+        repopulateLogView()
+    }
+
+    override fun onLogLevelChanged(logLevel: Api.LogLevel) {
+        if (logLevelSpinner != null) {
+            logLevelSpinner.setSelection(logManager.logLevel.priority)
+        } else {
+            repopulateLogView()
         }
     }
 }

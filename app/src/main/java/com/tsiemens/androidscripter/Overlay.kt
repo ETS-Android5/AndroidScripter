@@ -13,6 +13,7 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.*
 import com.tsiemens.androidscripter.script.Api
+import com.tsiemens.androidscripter.script.ScriptLogManager
 import com.tsiemens.androidscripter.util.ColorCompat
 import com.tsiemens.androidscripter.util.UiUtil
 import com.tsiemens.androidscripter.widget.ScriptController
@@ -27,7 +28,8 @@ class OverlayContainer(val root: View,
 }
 
 // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
-class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.OverlayManager {
+class OverlayManager(val activity: Activity, val scriptLogManager: ScriptLogManager):
+    OverlayManagerBase(activity), Api.OverlayManager {
     companion object {
         val TAG: String = OverlayManager::class.java.simpleName
     }
@@ -197,6 +199,8 @@ class OverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.
             overlay!!.root.findViewById(R.id.restart_button),
             overlay!!.logTv,
             overlay!!.root.findViewById(R.id.log_scrollview),
+            overlay!!.root.findViewById(R.id.log_level_spinner),
+            scriptLogManager,
             controller
         )
     }

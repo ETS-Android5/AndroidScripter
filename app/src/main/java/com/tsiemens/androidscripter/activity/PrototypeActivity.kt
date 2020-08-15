@@ -19,6 +19,7 @@ import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.media.projection.MediaProjectionManager
 import com.tsiemens.androidscripter.*
+import com.tsiemens.androidscripter.script.ScriptLogManager
 import com.tsiemens.androidscripter.service.AccessibilitySettingDialogFragment
 import com.tsiemens.androidscripter.service.ScriptAccessService
 
@@ -36,7 +37,8 @@ class MainActivity : AppCompatActivity() {
     val bcastReceiver : BroadcastReceiver? = MyReceiver()
     var projectionManager : MediaProjectionManager? = null
 
-    val overlayManager = OverlayManager(this)
+    val logManager = ScriptLogManager()
+    val overlayManager = OverlayManager(this, logManager)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

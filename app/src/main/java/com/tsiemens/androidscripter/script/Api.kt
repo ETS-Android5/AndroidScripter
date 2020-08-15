@@ -45,8 +45,8 @@ class Api(val ctx: Context,
         }
     }
 
-    enum class LogLevel {
-        DEBUG, VERBOSE, INFO, WARNING, ERROR
+    enum class LogLevel(val priority: Int) {
+        DEBUG(0), VERBOSE(1), INFO(2), WARNING(3), ERROR(4)
     }
 
     class LogEntry(val message: String, val level: LogLevel) {

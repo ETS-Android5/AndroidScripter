@@ -17,9 +17,18 @@
         <item>Screen Text</item>
     </string-array>
 
+    <string-array name="log_level_names">
+        <item>Debug</item>
+        <item>Verbose</item>
+        <item>Info</item>
+        <item>Warning</item>
+        <item>Error</item>
+    </string-array>
+
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="log">Log</string>
+    <string name="log_level_colon">Log Level:</string>
     <string name="title_activity_script_list">ScriptListActivity</string>
     <string name="show_overlay">Show Overlay</string>
 

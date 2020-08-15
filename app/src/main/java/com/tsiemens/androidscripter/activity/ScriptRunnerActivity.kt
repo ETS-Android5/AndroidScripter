@@ -16,6 +16,7 @@ import com.chaquo.python.PyException
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.script.Script
 import com.tsiemens.androidscripter.script.Api
+import com.tsiemens.androidscripter.script.ScriptLogManager
 import com.tsiemens.androidscripter.storage.*
 import com.tsiemens.androidscripter.util.UiUtil
 import com.tsiemens.androidscripter.widget.ScriptController
@@ -31,7 +32,8 @@ import kotlin.concurrent.write
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     Api.LogChangeListener, Api.ScreenProvider {
 
-    val overlayManager = OverlayManager(this)
+    var scriptLogManager = ScriptLogManager()
+    val overlayManager = OverlayManager(this, scriptLogManager)
     val debugOverlayManager = DebugOverlayManager(this)
 
     lateinit var tessHelper: TesseractHelper
@@ -51,6 +53,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     lateinit var scriptNameTv: TextView
     lateinit var logTv: TextView
     lateinit var showOverlayCheck: CheckBox
+    lateinit var logLevelSpinner: Spinner
 
     var lastScreencap: Bitmap? = null
     var lastScreencapId: Long = 0
@@ -110,6 +113,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
             enableOverlay(checked)
         }
 
+        logLevelSpinner = findViewById(R.id.log_level_spinner)
+
         overlayManager.onDestroyListener = {
             showOverlayCheck.isChecked = false
             doPreDestroyOverlayCleanup()
@@ -157,7 +162,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         scriptUIControllers.helpers.add(
             ScriptControllerUIHelper(this,
                 startPauseButton, stopButton, restartButton,
-                logTv, logScrollView, scriptController) )
+                logTv, logScrollView, logLevelSpinner, scriptLogManager, scriptController) )
 
         screenCapClient = object : ScreenCaptureClient() {
                 override fun onScreenCap(bm: Bitmap, imgId: Long) {
@@ -467,6 +472,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     // From LogChangeListener
     override fun onLogChanged(newLog: Api.LogEntry) {
+        scriptLogManager.addLog(newLog)
         scriptUIControllers.onLog(newLog)
     }
 

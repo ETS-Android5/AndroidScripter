@@ -20,6 +20,7 @@ import com.tsiemens.androidscripter.OverlayManager
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.TesseractHelper
 import com.tsiemens.androidscripter.script.ScreenUtil
+import com.tsiemens.androidscripter.script.ScriptLogManager
 import fi.iki.elonen.NanoHTTPD
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -33,7 +34,8 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
     private var lastImgText: String? = null
 
     // Set here for testing only
-    val overlayManager = OverlayManager(this)
+    val logManager = ScriptLogManager()
+    val overlayManager = OverlayManager(this, logManager)
 
     val debugOverlayManager = DebugOverlayManager(this)
 
