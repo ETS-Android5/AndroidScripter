@@ -42,7 +42,12 @@ fun getUsageStatsForegroundActivityName(ctx: Context): String? {
     return topActivity
 }
 
-fun tryGuaranteeUsageStatsAccess(ctx: FragmentActivity) {
+/**
+ * @return: true if permissions were already granted.
+ *          false if the user is going to need to take some action which is not guaranteed
+ *              complete on return
+*/
+fun tryGuaranteeUsageStatsAccess(ctx: FragmentActivity): Boolean {
     if (getUsageStatsForegroundActivityName(ctx) == null) {
         val dialog = OkNoDialogFragment()
         dialog.setMessage("This app requires permission to access usage statistics. Allow?")
@@ -50,7 +55,9 @@ fun tryGuaranteeUsageStatsAccess(ctx: FragmentActivity) {
             ctx.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         })
         dialog.show(ctx.supportFragmentManager, "Usage stats perms dialog")
+        return false
     }
+    return true
 }
 
 fun launchAccessibilitySettings(ctx: Context) {

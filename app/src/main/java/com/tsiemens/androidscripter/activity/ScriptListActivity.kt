@@ -68,8 +68,6 @@ class ScriptListActivity : AppCompatActivity() {
         }
 
         recyclerView.addOnItemTouchListener(recyclerClickListener)
-
-        tryGetPermissions()
     }
 
     override fun onDestroy() {
@@ -92,7 +90,10 @@ class ScriptListActivity : AppCompatActivity() {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.action_settings -> true
+            R.id.action_settings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
             R.id.action_launch_screen_cap_debug_activity -> {
                 startActivity(Intent(this, ScreenCaptureImageActivity::class.java))
                 true
@@ -115,16 +116,26 @@ class ScriptListActivity : AppCompatActivity() {
         viewAdapter.notifyDataSetChanged()
     }
 
-    private fun tryGetPermissions() {
-        tryGuaranteeUsageStatsAccess(this)
+    /**
+     * @return: true if permissions were already granted.
+     *          false if the user is going to need to take some action which is not guaranteed
+     *              complete on return
+     */
+    private fun tryGetPermissions(): Boolean {
+        var alreadyGranted = tryGuaranteeUsageStatsAccess(this)
 
         if (!isMyServiceRunning(this, ScriptAccessService::class.java)) {
             AccessibilitySettingDialogFragment()
                 .show(supportFragmentManager, "")
+            alreadyGranted = false
         }
+        return alreadyGranted
     }
 
     private fun startScriptActivity(key: ScriptKey) {
+        if (!tryGetPermissions()) {
+            return
+        }
         // Run this on a very slight delay, to allow the ripple effect to take effect before
         // interrupting the UI thread to spawn the activity.
         Handler(mainLooper).postDelayed( {

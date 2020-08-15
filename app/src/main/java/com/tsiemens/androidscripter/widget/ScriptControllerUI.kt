@@ -8,6 +8,8 @@ import android.widget.TextView
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.script.Api
 import android.content.Context
+import android.content.SharedPreferences
+import android.preference.PreferenceManager
 import android.text.Html
 import android.text.Spanned
 import com.tsiemens.androidscripter.util.DrawableUtil
@@ -61,6 +63,10 @@ class ScriptControllerUIHelper(val context: Context,
                 view: View, i: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int ->
             scrollLogToBottom()
         }
+
+        val logTextSize = PreferenceManager.getDefaultSharedPreferences(context).getInt("log_text_size", 12)
+        logText.textSize = logTextSize.toFloat()
+
         notifyScriptStateChanged()
     }
 

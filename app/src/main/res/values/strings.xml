@@ -26,4 +26,12 @@
     <string name="screen_size_colon">Screen Size:</string>
     <string name="location_colon">Location:</string>
     <string name="color_colon">Colour:</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="script_exec_pref_header">Script Execution</string>
+
+    <!-- Script Exec Preferences -->
+    <string name="log_text_size_title">Log Text Size</string>
+    <string name="log_text_size_summary">01/01 12:00:00: Sample log text</string>
 </resources>

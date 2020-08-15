@@ -164,7 +164,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:maxWidth="400dp"
-                                android:textSize="12dp"/>
+                                android:textSize="12dp"
+                                android:fontFamily="monospace"
+                                />
 
                     </ScrollView>
                 </LinearLayout>

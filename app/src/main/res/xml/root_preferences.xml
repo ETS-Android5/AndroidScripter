@@ -1,0 +1,41 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory app:title="@string/script_exec_pref_header">
+        <com.tsiemens.androidscripter.preference.TextSizePreference
+                app:key="log_text_size"
+                app:title="@string/log_text_size_title"
+                app:defaultValue="12"
+                app:min="6"
+                android:max="24"
+                app:showSeekBarValue="true"
+                app:summary="@string/log_text_size_summary"
+                />
+
+    </PreferenceCategory>
+    <!--
+    <PreferenceCategory app:title="@string/sync_header">
+        <EditTextPreference
+                app:key="signature"
+                app:title="@string/signature_title"
+                app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+                app:defaultValue="reply"
+                app:entries="@array/reply_entries"
+                app:entryValues="@array/reply_values"
+                app:key="reply"
+                app:title="@string/reply_title"
+                app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+                app:dependency="sync"
+                app:key="attachment"
+                app:summaryOff="@string/attachment_summary_off"
+                app:summaryOn="@string/attachment_summary_on"
+                app:title="@string/attachment_title" />
+
+    </PreferenceCategory>
+    -->
+
+</PreferenceScreen>
