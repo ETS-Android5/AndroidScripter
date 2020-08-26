@@ -47,13 +47,13 @@ def check_color_at_point(api, bm, coord, targetColorStr, portrait=True, dist=50.
    bw = bm.getWidth()
    bh = bm.getHeight()
    if (bh > bw) != portrait:
-      api.log("checkScreenColorAtPoint: orientation mismatch")
+      api.logd("checkScreenColorAtPoint: orientation mismatch")
       return None
 
    adjCoord = ( int(float(coord[0]) * (bw - 1)),
                 int(float(coord[1]) * (bh - 1)) )
    if bw < adjCoord[0] or bh < adjCoord[1]:
-      api.log("coord %r is too big for bitmap %d x %d" % (adjCoord, bw, bh))
+      api.logw("coord %r is too big for bitmap %d x %d" % (adjCoord, bw, bh))
       return None
 
    colTup = color.colorTupFromBitmapPixel(bm, adjCoord)
@@ -62,7 +62,7 @@ def check_color_at_point(api, bm, coord, targetColorStr, portrait=True, dist=50.
    targetColorTup = color.colorStrToTup(targetColorStr)
    calcDist = color.colorDist(colTup, targetColorTup)
    if debugLogging:
-      api.log("Color at %r: #%s" % (adjCoord, color.tupToColorStr(colTup)))
+      api.logd("Color at %r: #%s" % (adjCoord, color.tupToColorStr(colTup)))
    return calcDist <= dist
 
 def check_screen_color_at_point(api, coord, targetColorStr, portrait=True, dist=50.0,
@@ -72,7 +72,7 @@ def check_screen_color_at_point(api, coord, targetColorStr, portrait=True, dist=
       return check_color_at_point(api, bm, coord, targetColorStr, portrait=portrait, dist=dist,
                                   debugLogging=debugLogging)
    else:
-      api.log("screen bitmap was None")
+      api.logw("screen bitmap was None")
       return None
 
 
