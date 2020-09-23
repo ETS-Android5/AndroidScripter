@@ -1,4 +1,5 @@
 import java
+from typing import Set
 
 class Api:
     _jLogLevel = java.jclass("com.tsiemens.androidscripter.script.Api$LogLevel")
@@ -54,8 +55,17 @@ class Api:
     def is_network_metered(self):
         '''
         Returns True, False, or None if the network and/or its capabilities could not be determined
+        NOTE: this is not always accurate when connected to a VPN
         '''
         return self._api.isNetworkMetered()
+
+    def get_network_transports(self) -> Set[str]:
+        '''
+        returns a set which can contain any of these strings:
+        "bluetooth", "cellular", "ethernet", "vpn", "wifi"
+        '''
+        transports = self._api.getNetworkTransports()
+        return set(t for t in transports.toArray())
 
     def send_click(self, x, y, is_percent=False):
         return self._api.sendClick(x, y, is_percent)

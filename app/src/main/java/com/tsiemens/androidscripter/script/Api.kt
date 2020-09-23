@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.collections.HashMap
 import kotlin.concurrent.write
 import kotlin.math.min
 
@@ -174,14 +175,39 @@ class Api(val ctx: Context,
         return ScreenXsResult(null, null, null, false)
     }
 
-    fun isNetworkMetered(): Boolean? {
+    private fun networkCapabilities(): NetworkCapabilities? {
         val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val net = cm.activeNetwork ?: return null
-        val caps = cm.getNetworkCapabilities(net)
+        return cm.getNetworkCapabilities(net)
+    }
+
+    fun isNetworkMetered(): Boolean? {
+        val caps = networkCapabilities()
         if (caps != null) {
             return !caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
         }
         return null
+    }
+
+    fun getNetworkTransports(): Set<String> {
+        val transportSet = hashSetOf<String>()
+        val caps = networkCapabilities()
+        if (caps != null) {
+            val capsToStr = hashMapOf(
+                NetworkCapabilities.TRANSPORT_BLUETOOTH to "bluetooth",
+                NetworkCapabilities.TRANSPORT_CELLULAR to "cellular",
+                NetworkCapabilities.TRANSPORT_ETHERNET to "ethernet",
+                NetworkCapabilities.TRANSPORT_VPN to "vpn",
+                NetworkCapabilities.TRANSPORT_WIFI to "wifi"
+            )
+
+            for ((transport, str) in capsToStr) {
+                if (caps.hasTransport(transport)) {
+                    transportSet.add(str)
+                }
+            }
+        }
+        return transportSet
     }
 
     fun notifyPointInspected(x: Float, y: Float, color: ColorCompat, isPercent: Boolean = false) {
