@@ -15,6 +15,7 @@ import android.media.ImageReader
 import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
+import android.widget.Toast
 import com.tsiemens.androidscripter.util.BitmapUtil
 import com.tsiemens.androidscripter.util.NTObjPtr
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -155,9 +156,9 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        Log.d(TAG, "onActivityResult $requestCode")
+        Log.d(TAG, "onActivityResult requestCode: $requestCode, data: $data")
         if (requestCode == SCREENCAP_REQUEST_CODE) {
-            projection = projectionManager!!.getMediaProjection(resultCode, data!!)
+            projection = if (data != null) projectionManager?.getMediaProjection(resultCode, data) else null
 
             if (projection != null) {
                 val metrics = resources.displayMetrics
@@ -194,6 +195,8 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
                 )
 
                 imageReader!!.setOnImageAvailableListener(this, looperHandler)
+            } else {
+                Toast.makeText(this, "Unable to start screen capture", Toast.LENGTH_LONG).show()
             }
         }
 
