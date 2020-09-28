@@ -14,10 +14,14 @@ import android.view.MenuItem
 import android.widget.*
 import com.chaquo.python.PyException
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
+import com.tsiemens.androidscripter.inspect.ScreenProvider
+import com.tsiemens.androidscripter.notify.ScreenInspectionListener
 import com.tsiemens.androidscripter.script.Script
 import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.script.ScriptLogManager
 import com.tsiemens.androidscripter.storage.*
+import com.tsiemens.androidscripter.util.BitmapUtil
+import com.tsiemens.androidscripter.util.ColorCompat
 import com.tsiemens.androidscripter.util.UiUtil
 import com.tsiemens.androidscripter.widget.ScriptController
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
@@ -25,15 +29,16 @@ import com.tsiemens.androidscripter.widget.ScriptControllerUIHelperColl
 import com.tsiemens.androidscripter.widget.ScriptState
 import java.lang.Exception
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
 class ScriptRunnerActivity : ScreenCaptureActivityBase(),
-    Api.LogChangeListener, Api.ScreenProvider {
+    Api.LogChangeListener, ScreenProvider, ScreenInspectionListener {
 
     var scriptLogManager = ScriptLogManager()
-    val overlayManager = OverlayManager(this, scriptLogManager)
+    val overlayManager = OverlayManager(this, scriptLogManager, this, this)
     val debugOverlayManager = DebugOverlayManager(this)
 
     lateinit var tessHelper: TesseractHelper
@@ -48,7 +53,8 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     var scriptThread: Thread? = null
     var script: Script? = null
     var scriptCode: String? = null
-    var scriptApi = Api(this, this, this, overlayManager, debugOverlayManager)
+    var scriptApi = Api(this, this, this, this,
+        overlayManager, debugOverlayManager)
 
     lateinit var scriptNameTv: TextView
     lateinit var logTv: TextView
@@ -477,13 +483,14 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     }
 
     // NOTE this method will block the thread.
-    override fun getScreenCap(): Bitmap? {
+    override fun getScreenCap(cropPadding: Boolean): Bitmap? {
         screenCapLatchLock.lock()
         screenCapLatch = CountDownLatch(1)
         screenCapLatchLock.unlock()
 
         screenCapClient.requestScreenCap()
-        screenCapLatch!!.await()
+        // Ok is false if we time out
+        val ok = screenCapLatch!!.await(1, TimeUnit.SECONDS)
 
         screenCapLatchLock.lock()
         if (screenCapLatch?.count != 0L) {
@@ -492,19 +499,36 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         screenCapLatch = null
         screenCapLatchLock.unlock()
 
-        if (lastScreencapId == lastRetrievedScreencapId) {
-            val msg = "WARN: Last screencap has not changed since last request"
+        var bm : Bitmap? = null
+        if (ok) {
+            if (lastScreencapId == lastRetrievedScreencapId) {
+                val msg = "WARN: Last screencap has not changed since last request"
+                onLogChanged(Api.LogEntry(msg, Api.LogLevel.WARNING))
+                Log.w(TAG, msg)
+            }
+            lastRetrievedScreencapId = lastScreencapId
+
+            if (lastScreencap != null) {
+                runOnUiThread {
+                    overlayManager.updateScreenCaptureViewer(lastScreencap!!)
+                }
+            }
+
+            bm = lastScreencap
+
+            if (cropPadding && bm != null) {
+                bm = BitmapUtil.cropScreenshotPadding(bm)
+            }
+        } else {
+            val msg = "WARN: Timed out getting screencap"
             onLogChanged(Api.LogEntry(msg, Api.LogLevel.WARNING))
             Log.w(TAG, msg)
         }
-        lastRetrievedScreencapId = lastScreencapId
+        return bm
+    }
 
-        if (lastScreencap != null) {
-            runOnUiThread {
-                overlayManager.updateScreenCaptureViewer(lastScreencap!!)
-            }
-        }
-
-        return lastScreencap
+    override fun onPointInspected(x: Float, y: Float, color: ColorCompat, isPercent: Boolean) {
+        debugOverlayManager.onPointInspected(x, y, isPercent)
+        overlayManager.onPointInspected(x, y, color, isPercent)
     }
 }

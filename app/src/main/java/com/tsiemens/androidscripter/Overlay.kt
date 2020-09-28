@@ -12,6 +12,8 @@ import android.view.*
 import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.*
+import com.tsiemens.androidscripter.inspect.ScreenProvider
+import com.tsiemens.androidscripter.notify.ScreenInspectionListener
 import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.script.ScriptLogManager
 import com.tsiemens.androidscripter.util.ColorCompat
@@ -28,7 +30,10 @@ class OverlayContainer(val root: View,
 }
 
 // https://stackoverflow.com/questions/4481226/creating-a-system-overlay-window-always-on-top
-class OverlayManager(val activity: Activity, val scriptLogManager: ScriptLogManager):
+class OverlayManager(val activity: Activity,
+                     val scriptLogManager: ScriptLogManager,
+                     val screenProvider: ScreenProvider?,
+                     val screenInspectionListener: ScreenInspectionListener?):
     OverlayManagerBase(activity), Api.OverlayManager {
     companion object {
         val TAG: String = OverlayManager::class.java.simpleName
@@ -39,6 +44,8 @@ class OverlayManager(val activity: Activity, val scriptLogManager: ScriptLogMana
     private var overlay: OverlayContainer? = null
 
     var onDestroyListener: (()->Unit)? = null
+
+    private val touchInterceptOverlayManager = TouchInterceptOverlayManager(activity, screenProvider, screenInspectionListener)
 
     @TargetApi(Build.VERSION_CODES.O)
     @SuppressWarnings("ClickableViewAccessibility")
@@ -134,6 +141,12 @@ class OverlayManager(val activity: Activity, val scriptLogManager: ScriptLogMana
         val largestScreenLength = max(screenSize.x, screenSize.y)
         sizeFrameParams.width = (largestScreenLength * 0.4).toInt()
 
+        overlayRoot.findViewById<Button>(R.id.overlay_record_tap_button).setOnClickListener {
+            if (!touchInterceptOverlayManager.started()) {
+                touchInterceptOverlayManager.showOverlay()
+            }
+        }
+
         overlayRoot.addOnLayoutChangeListener(OverlayRootListener(sizePositionController))
     }
 
@@ -227,7 +240,7 @@ class OverlayManager(val activity: Activity, val scriptLogManager: ScriptLogMana
         return null
     }
 
-    override fun onPointInspected(x: Float, y: Float, color: ColorCompat, isPercent: Boolean) {
+    fun onPointInspected(x: Float, y: Float, color: ColorCompat, isPercent: Boolean) {
         val screenSize = UiUtil.getDisplaySize(context)
 
         val realX: Int

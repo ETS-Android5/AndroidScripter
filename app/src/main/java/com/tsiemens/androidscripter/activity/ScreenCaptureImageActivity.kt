@@ -35,7 +35,7 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
 
     // Set here for testing only
     val logManager = ScriptLogManager()
-    val overlayManager = OverlayManager(this, logManager)
+    val overlayManager = OverlayManager(this, logManager, null, null)
 
     val debugOverlayManager = DebugOverlayManager(this)
 

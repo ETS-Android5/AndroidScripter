@@ -36,7 +36,7 @@ class FadingPointIndicator(val point: Point, val style: PointIndicatorStyle, val
     }
 }
 
-class DebugCanvasOverlayView(ctx: Context): View(ctx) {
+class DebugCanvasOverlayView(ctx: Context): FullscreenOverlayView(ctx) {
     private var screenSize = DisplayMetrics()
 
     val linePaint = Paint()
@@ -50,15 +50,6 @@ class DebugCanvasOverlayView(ctx: Context): View(ctx) {
     val timedLines = ArrayDeque<Pair<ScreenUtil.Line, Long>>()
     var lastXDetectImgWidth: Int = 1
     var lastXDetectImgHeight: Int = 1
-    var screenWidth = 0
-    var screenHeight = 0
-
-    var lastDrawHeight = 0
-    var lastDrawWidth = 0
-
-    var cachedTopBarHeight: Int = 0
-
-    val cachedLocationInScreen = IntArray(2)
 
     companion object {
         val TAG = DebugCanvasOverlayView::class.java.simpleName
@@ -90,8 +81,6 @@ class DebugCanvasOverlayView(ctx: Context): View(ctx) {
         xPaint.color = Color.CYAN
         xPaint.strokeWidth = 3f
         xPaint.isDither = true
-
-        refreshScreenSize()
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -102,8 +91,6 @@ class DebugCanvasOverlayView(ctx: Context): View(ctx) {
             return
         }
         Log.d(TAG, "onDraw width: $width height: $height")
-
-        refreshCaches()
 
 //        canvas!!.drawLine(20f, 20f, width - 20f, height - 20f, linePaint)
 //        canvas.drawLine(100f, 0f, 100f, topBarHeight.toFloat(), linePaint)
@@ -144,29 +131,6 @@ class DebugCanvasOverlayView(ctx: Context): View(ctx) {
 
         lastDrawHeight = height
         lastDrawWidth = width
-    }
-
-    private fun refreshCaches() {
-        // divide by 3, assuming that the bottom bar is present, and is about twice the height of the top bar
-        cachedTopBarHeight = (screenSize.heightPixels - height) / 3
-
-        getLocationOnScreen(cachedLocationInScreen)
-
-        if (lastDrawHeight != height || lastDrawWidth != width) {
-            refreshScreenSize()
-        }
-    }
-
-    private fun refreshScreenSize() {
-        UiUtil.getDisplaySize(context, screenSize)
-
-        if ((screenSize.widthPixels < screenSize.heightPixels) == (width < height)) {
-            screenWidth = screenSize.widthPixels
-            screenHeight = screenSize.heightPixels
-        } else {
-            screenHeight = screenSize.widthPixels
-            screenWidth = screenSize.heightPixels
-        }
     }
 
     private fun drawPointIndicator(p: FadingPointIndicator, canvas: Canvas) {
@@ -217,14 +181,6 @@ class DebugCanvasOverlayView(ctx: Context): View(ctx) {
             p)
     }
 
-    private fun screenXToCanvasX(x: Float): Float {
-        return x - cachedLocationInScreen[0]
-    }
-
-    private fun screenYToCanvasY(y: Float): Float {
-        return y - cachedLocationInScreen[1]
-    }
-
     fun addPointIndicator(p: Point) {
         val fc = FadingPointIndicator(p, PointIndicatorStyle.SQUARE, pointIndicatorPaint)
         points.add(fc)
@@ -269,56 +225,11 @@ class DebugCanvasOverlayView(ctx: Context): View(ctx) {
     }
 }
 
-class DebugOverlayManager(val activity: Activity): OverlayManagerBase(activity), Api.DebugOverlayManager {
+class DebugOverlayManager(activity: Activity):
+    FullscreenOverlayManagerBase<DebugCanvasOverlayView>(activity, "DebugCanvasOverlay", false),
+    Api.DebugOverlayManager {
     companion object {
         val TAG = DebugOverlayManager::class.java.simpleName
-    }
-
-    class OverlayContainer(val root: DebugCanvasOverlayView)
-
-    private var wm: WindowManager? = null
-    private var params: WindowManager.LayoutParams? = null
-    private var overlay: OverlayContainer? = null
-
-    @TargetApi(Build.VERSION_CODES.O)
-    @SuppressWarnings("ClickableViewAccessibility")
-    override fun showOverlay() {
-        if (overlay != null) {
-            return
-        }
-
-        Log.v(TAG, "showOverlay")
-        wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-
-//        val overlayRoot = LayoutInflater.from(activity).inflate(R.layout.overlay_base, null)
-        val overlayRoot = DebugCanvasOverlayView(context)
-        val overlay = OverlayContainer(overlayRoot)
-        this.overlay = overlay
-
-        params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-//            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-//                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT)
-
-        params!!.gravity = ( Gravity.START or Gravity.TOP )
-        params!!.title = "DebugCanvasOverlay"
-        wm!!.addView(overlayRoot, params)
-    }
-
-    override fun started(): Boolean {
-        return overlay != null
-    }
-
-    override fun destroy() {
-        if (overlay != null) {
-            wm!!.removeView(overlay!!.root)
-            overlay = null
-        }
     }
 
     fun bringToFront() {
@@ -343,7 +254,7 @@ class DebugOverlayManager(val activity: Activity): OverlayManagerBase(activity),
         return Point(realX, realY)
     }
 
-    override fun onPointInspected(x: Float, y: Float, isPercent: Boolean) {
+    fun onPointInspected(x: Float, y: Float, isPercent: Boolean) {
         val point = getScreenPoint(x, y, isPercent)
         activity.runOnUiThread {
             overlay!!.root.addPointIndicator(point)
@@ -367,5 +278,9 @@ class DebugOverlayManager(val activity: Activity): OverlayManagerBase(activity),
             overlay!!.root.addLines(res.allLines)
 
         }
+    }
+
+    override fun inflateOverlayView(): DebugCanvasOverlayView {
+        return DebugCanvasOverlayView(context)
     }
 }

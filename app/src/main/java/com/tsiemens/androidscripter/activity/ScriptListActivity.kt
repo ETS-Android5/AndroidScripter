@@ -99,7 +99,7 @@ class ScriptListActivity : AppCompatActivity() {
                 true
             }
             R.id.action_launch_prototype_activity -> {
-                startActivity(Intent(this, MainActivity::class.java))
+                startActivity(Intent(this, PrototypeActivity::class.java))
                 true
             }
             R.id.action_licenses -> {

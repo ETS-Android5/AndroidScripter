@@ -190,7 +190,18 @@
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:orientation="vertical">
-
+                    <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                        <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/overlay_record_tap_button"
+                                style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Record Tap"
+                                android:textSize="5pt"/>
+                    </LinearLayout>
                     <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -257,14 +268,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal">
-                        <Button
+                        <androidx.appcompat.widget.AppCompatButton
                                 android:id="@+id/overlay_ocr_capture_button"
+                                style="@style/Widget.AppCompat.Button.Borderless.Colored"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Capture"
                                 android:textSize="5pt"/>
-                        <Button
+                        <androidx.appcompat.widget.AppCompatButton
                                 android:id="@+id/overlay_ocr_clear_button"
+                                style="@style/Widget.AppCompat.Button.Borderless.Colored"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Clear"

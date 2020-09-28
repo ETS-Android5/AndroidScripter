@@ -2,13 +2,14 @@ package com.tsiemens.androidscripter.script
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
 import android.graphics.Point
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.DisplayMetrics
 import android.util.Log
 import com.tsiemens.androidscripter.getUsageStatsForegroundActivityName
+import com.tsiemens.androidscripter.inspect.ScreenProvider
+import com.tsiemens.androidscripter.notify.ScreenInspectionListener
 import com.tsiemens.androidscripter.service.ScriptAccessService
 import com.tsiemens.androidscripter.service.ServiceBcastClient
 import com.tsiemens.androidscripter.service.WindowState
@@ -18,15 +19,13 @@ import com.tsiemens.androidscripter.util.UiUtil
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.HashMap
-import kotlin.concurrent.write
 import kotlin.math.min
 
 @Suppress("UNUSED")
 class Api(val ctx: Context,
           val logChangeListener: LogChangeListener?,
           val screenProvider: ScreenProvider?,
+          val screenInspectionListener: ScreenInspectionListener?,
           val overlayManager: OverlayManager?,
           val debugOverlayManager: DebugOverlayManager?) {
     val paused = AtomicBoolean(false)
@@ -66,10 +65,6 @@ class Api(val ctx: Context,
         fun onLogChanged(newLog: LogEntry)
     }
 
-    interface ScreenProvider {
-        fun getScreenCap(): Bitmap?
-    }
-
     // values are between 0 and 1.0
     class WinDimen(val xPct: Float, val yPct: Float,
                    val widthPct: Float, val heightPct: Float) {
@@ -83,11 +78,9 @@ class Api(val ctx: Context,
 
     interface OverlayManager {
         fun getOverlayDimens(): WinDimen?
-        fun onPointInspected(x: Float, y: Float, color: ColorCompat, isPercent: Boolean = true)
     }
 
     interface DebugOverlayManager {
-        fun onPointInspected(x: Float, y: Float, isPercent: Boolean = false)
         fun onClickSent(x: Float, y: Float, isPercent: Boolean = false)
         fun onXsFound(res: ScreenUtil.XDetectResult)
     }
@@ -139,11 +132,7 @@ class Api(val ctx: Context,
     }
 
     fun getScreenCap(): Bitmap? {
-        var bm = screenProvider?.getScreenCap()
-        if (bm != null) {
-            bm = BitmapUtil.cropScreenshotPadding(bm)
-        }
-        return bm
+        return screenProvider?.getScreenCap(cropPadding = true)
     }
 
     class ScreenXsResult(val xs: List<ScreenUtil.Cross>?,
@@ -211,8 +200,7 @@ class Api(val ctx: Context,
     }
 
     fun notifyPointInspected(x: Float, y: Float, color: ColorCompat, isPercent: Boolean = false) {
-        debugOverlayManager?.onPointInspected(x, y, isPercent)
-        overlayManager?.onPointInspected(x, y, color, isPercent)
+        screenInspectionListener?.onPointInspected(x, y, color, isPercent)
     }
 
     fun sendClick(x: Float, y: Float, isPercent: Boolean = false) {

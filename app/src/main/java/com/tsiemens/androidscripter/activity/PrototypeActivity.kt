@@ -29,16 +29,16 @@ private class MyReceiver : BroadcastReceiver() {
     }
 }
 
-class MainActivity : AppCompatActivity() {
+class PrototypeActivity : AppCompatActivity() {
     companion object {
-        val TAG = MainActivity::class.java.simpleName
+        val TAG = PrototypeActivity::class.java.simpleName
     }
 
     val bcastReceiver : BroadcastReceiver? = MyReceiver()
     var projectionManager : MediaProjectionManager? = null
 
     val logManager = ScriptLogManager()
-    val overlayManager = OverlayManager(this, logManager)
+    val overlayManager = OverlayManager(this, logManager, null, null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
