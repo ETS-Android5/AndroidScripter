@@ -1,4 +1,4 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.overlay
 
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
@@ -12,6 +12,7 @@ import android.view.*
 import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.*
+import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.inspect.ScreenProvider
 import com.tsiemens.androidscripter.notify.ScreenInspectionListener
 import com.tsiemens.androidscripter.script.Api
@@ -45,7 +46,12 @@ class OverlayManager(val activity: Activity,
 
     var onDestroyListener: (()->Unit)? = null
 
-    private val touchInterceptOverlayManager = TouchInterceptOverlayManager(activity, screenProvider, screenInspectionListener)
+    private val touchInterceptOverlayManager =
+        TouchInterceptOverlayManager(
+            activity,
+            screenProvider,
+            screenInspectionListener
+        )
 
     @TargetApi(Build.VERSION_CODES.O)
     @SuppressWarnings("ClickableViewAccessibility")
@@ -70,10 +76,18 @@ class OverlayManager(val activity: Activity,
         wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         wm!!.addView(overlayRoot, params)
 
-        val newOverlay = OverlayContainer(overlayRoot, params!!)
+        val newOverlay = OverlayContainer(
+            overlayRoot,
+            params!!
+        )
         this.overlay = newOverlay
 
-        val sizePositionController = OverlaySizeAndPositionController(newOverlay, activity, wm!!)
+        val sizePositionController =
+            OverlaySizeAndPositionController(
+                newOverlay,
+                activity,
+                wm!!
+            )
 
         val expander = overlayRoot.findViewById<View>(R.id.overlay_expand)
         expander.setOnClickListener {
@@ -125,10 +139,19 @@ class OverlayManager(val activity: Activity,
         }
 
         val handle = overlayRoot.findViewById<View>(R.id.overlay_handle)
-        handle.setOnTouchListener(ViewDragger(sizePositionController))
+        handle.setOnTouchListener(
+            ViewDragger(
+                sizePositionController
+            )
+        )
 
         val sizeHandle = overlayRoot.findViewById<View>(R.id.overlay_sizing_handle)
-        sizeHandle.setOnTouchListener(ViewResizer(newOverlay.sizeFrame, wm!!))
+        sizeHandle.setOnTouchListener(
+            ViewResizer(
+                newOverlay.sizeFrame,
+                wm!!
+            )
+        )
 
         val screenSize = Point()
         wm!!.defaultDisplay.getSize(screenSize)
@@ -147,7 +170,11 @@ class OverlayManager(val activity: Activity,
             }
         }
 
-        overlayRoot.addOnLayoutChangeListener(OverlayRootListener(sizePositionController))
+        overlayRoot.addOnLayoutChangeListener(
+            OverlayRootListener(
+                sizePositionController
+            )
+        )
     }
 
     override fun started(): Boolean {
@@ -166,7 +193,8 @@ class OverlayManager(val activity: Activity,
             val panelIds = arrayOf(
                 R.id.overlay_log_panel,
                 R.id.overlay_point_analysis_panel,
-                R.id.overlay_ocr_panel)
+                R.id.overlay_ocr_panel
+            )
             panelIds.forEach { id ->
                 val panel = overlay!!.root.findViewById<View>(id)
                 panel.visibility = if (id == panelId) View.VISIBLE else View.GONE

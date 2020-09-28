@@ -1,20 +1,15 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.overlay
 
 import android.animation.ValueAnimator
-import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Context
 import android.graphics.*
-import android.os.Build
 import android.os.Handler
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.Gravity
 import android.view.View
-import android.view.WindowManager
 import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.script.ScreenUtil
-import com.tsiemens.androidscripter.util.UiUtil
 import java.util.*
 
 enum class PointIndicatorStyle {
@@ -139,11 +134,13 @@ class DebugCanvasOverlayView(ctx: Context): FullscreenOverlayView(ctx) {
         when (p.style) {
             PointIndicatorStyle.CIRCLE ->
                 canvas.drawCircle(screenXToCanvasX(p.point.x.toFloat()),
-                                  screenYToCanvasY(p.point.y.toFloat()), CIRCLE_RADIUS, p.paint)
+                                  screenYToCanvasY(p.point.y.toFloat()),
+                    CIRCLE_RADIUS, p.paint)
             PointIndicatorStyle.SQUARE -> {
                 val canvasXCenter = screenXToCanvasX(p.point.x.toFloat())
                 val canvasYCenter = screenYToCanvasY(p.point.y.toFloat())
-                Log.d(TAG, "drawPointIndicator - canvasSize: ${canvas.width}x${canvas.height} "+
+                Log.d(
+                    TAG, "drawPointIndicator - canvasSize: ${canvas.width}x${canvas.height} "+
                                 "canvasPos: ${cachedLocationInScreen[0]}x${cachedLocationInScreen[1]} " +
                                 "screen: $screenWidth x $screenHeight")
                 Log.d(TAG, "drawPointIndicator - canvas x,y: $canvasXCenter, $canvasYCenter")
@@ -182,7 +179,11 @@ class DebugCanvasOverlayView(ctx: Context): FullscreenOverlayView(ctx) {
     }
 
     fun addPointIndicator(p: Point) {
-        val fc = FadingPointIndicator(p, PointIndicatorStyle.SQUARE, pointIndicatorPaint)
+        val fc = FadingPointIndicator(
+            p,
+            PointIndicatorStyle.SQUARE,
+            pointIndicatorPaint
+        )
         points.add(fc)
         Log.d(TAG, "addPointIndicator at ${p.x}, ${p.y} (screen: ${screenSize.widthPixels}, ${screenSize.heightPixels})")
         fc.attachToView(this)
@@ -190,7 +191,11 @@ class DebugCanvasOverlayView(ctx: Context): FullscreenOverlayView(ctx) {
     }
 
     fun addClick(p: Point) {
-        val fc = FadingPointIndicator(p, PointIndicatorStyle.CIRCLE, clickPaint)
+        val fc = FadingPointIndicator(
+            p,
+            PointIndicatorStyle.CIRCLE,
+            clickPaint
+        )
         points.add(fc)
         fc.attachToView(this)
         invalidate()

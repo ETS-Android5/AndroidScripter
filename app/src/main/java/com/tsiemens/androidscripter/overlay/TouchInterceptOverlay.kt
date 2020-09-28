@@ -1,4 +1,4 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.overlay
 
 import android.app.Activity
 import android.content.Context
@@ -91,3 +91,4 @@ class TouchInterceptOverlayManager(activity: Activity,
         return ret ?: false
     }
 }
+

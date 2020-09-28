@@ -16,6 +16,8 @@ import com.chaquo.python.PyException
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
 import com.tsiemens.androidscripter.inspect.ScreenProvider
 import com.tsiemens.androidscripter.notify.ScreenInspectionListener
+import com.tsiemens.androidscripter.overlay.DebugOverlayManager
+import com.tsiemens.androidscripter.overlay.OverlayManager
 import com.tsiemens.androidscripter.script.Script
 import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.script.ScriptLogManager
@@ -38,7 +40,12 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     Api.LogChangeListener, ScreenProvider, ScreenInspectionListener {
 
     var scriptLogManager = ScriptLogManager()
-    val overlayManager = OverlayManager(this, scriptLogManager, this, this)
+    val overlayManager = OverlayManager(
+        this,
+        scriptLogManager,
+        this,
+        this
+    )
     val debugOverlayManager = DebugOverlayManager(this)
 
     lateinit var tessHelper: TesseractHelper

@@ -15,8 +15,8 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import com.tsiemens.androidscripter.DebugOverlayManager
-import com.tsiemens.androidscripter.OverlayManager
+import com.tsiemens.androidscripter.overlay.DebugOverlayManager
+import com.tsiemens.androidscripter.overlay.OverlayManager
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.TesseractHelper
 import com.tsiemens.androidscripter.script.ScreenUtil
@@ -35,7 +35,12 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
 
     // Set here for testing only
     val logManager = ScriptLogManager()
-    val overlayManager = OverlayManager(this, logManager, null, null)
+    val overlayManager = OverlayManager(
+        this,
+        logManager,
+        null,
+        null
+    )
 
     val debugOverlayManager = DebugOverlayManager(this)
 

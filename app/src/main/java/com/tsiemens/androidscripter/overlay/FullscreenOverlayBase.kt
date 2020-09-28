@@ -1,4 +1,4 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.overlay
 
 import android.annotation.TargetApi
 import android.app.Activity

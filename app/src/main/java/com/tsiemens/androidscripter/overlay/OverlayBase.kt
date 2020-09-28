@@ -1,4 +1,4 @@
-package com.tsiemens.androidscripter
+package com.tsiemens.androidscripter.overlay
 
 import android.content.Context
 import android.content.Intent
