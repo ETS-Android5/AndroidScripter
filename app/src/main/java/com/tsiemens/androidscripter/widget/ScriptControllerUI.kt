@@ -31,8 +31,6 @@ interface ScriptController {
     fun onStopPressed()
     fun onRestartPressed()
     fun getScriptState(): ScriptState
-    @Deprecated("")
-    fun scriptIsRunning(): Boolean
     /** Should return true if the script is in a state where we could start it.
         Should still return true if the script is currently running */
     fun scriptIsRunnable(): Boolean

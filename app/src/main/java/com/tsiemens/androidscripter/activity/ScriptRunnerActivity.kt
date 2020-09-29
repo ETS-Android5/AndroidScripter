@@ -161,10 +161,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                 this@ScriptRunnerActivity.onStopButton()
             }
 
-            override fun scriptIsRunning(): Boolean {
-                return scriptThread != null
-            }
-
             override fun scriptIsRunnable(): Boolean {
                 return scriptCode != null
             }
