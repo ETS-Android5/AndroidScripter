@@ -22,6 +22,7 @@ import com.tsiemens.androidscripter.util.UiUtil
 import com.tsiemens.androidscripter.widget.ScriptController
 import com.tsiemens.androidscripter.widget.ScriptControllerUIHelper
 import kotlin.math.max
+import kotlin.math.min
 
 class OverlayContainer(val root: View,
                        val positionParams: WindowManager.LayoutParams) {
@@ -155,14 +156,15 @@ class OverlayManager(val activity: Activity,
 
         val screenSize = Point()
         wm!!.defaultDisplay.getSize(screenSize)
+        val shorterScreenLength = min(screenSize.x, screenSize.y)
         params!!.x = 0
-        params!!.y = (screenSize.y * 0.3).toInt()
+        params!!.y = (shorterScreenLength * 0.35/2.0).toInt()
         wm!!.updateViewLayout(overlayRoot, params)
 
-        // Limit the default width of the overlay
+        // Limit the default size of the overlay
         val sizeFrameParams = newOverlay.sizeFrame.layoutParams
-        val largestScreenLength = max(screenSize.x, screenSize.y)
-        sizeFrameParams.width = (largestScreenLength * 0.4).toInt()
+        sizeFrameParams.width = (shorterScreenLength * 0.65).toInt()
+        sizeFrameParams.height = (shorterScreenLength * 0.65).toInt()
 
         overlayRoot.findViewById<Button>(R.id.overlay_record_tap_button).setOnClickListener {
             if (!touchInterceptOverlayManager.started()) {
