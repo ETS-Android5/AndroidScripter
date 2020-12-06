@@ -102,6 +102,10 @@ class ScriptListActivity : AppCompatActivity() {
                 startActivity(Intent(this, PrototypeActivity::class.java))
                 true
             }
+            R.id.action_launch_exceptions_activity -> {
+                startActivity(Intent(this, DebugExceptionViewerActivity::class.java))
+                true
+            }
             R.id.action_licenses -> {
                 LicenseDialog().show(supportFragmentManager, "License dialog")
                 true

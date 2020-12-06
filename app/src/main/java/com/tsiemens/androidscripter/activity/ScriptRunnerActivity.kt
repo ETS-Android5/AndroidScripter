@@ -22,6 +22,8 @@ import com.tsiemens.androidscripter.script.Script
 import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.script.ScriptLogManager
 import com.tsiemens.androidscripter.storage.*
+import com.tsiemens.androidscripter.thread.UncaughtException
+import com.tsiemens.androidscripter.thread.UncaughtExceptionHandler
 import com.tsiemens.androidscripter.util.BitmapUtil
 import com.tsiemens.androidscripter.util.ColorCompat
 import com.tsiemens.androidscripter.util.UiUtil

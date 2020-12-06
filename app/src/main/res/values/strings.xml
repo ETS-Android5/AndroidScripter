@@ -5,6 +5,7 @@
     <string name="action_edit">Edit</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_delete">Delete</string>
+    <string name="action_clear">Clear</string>
 
     <string-array name="overlay_displays_ids">
         <item>script_log</item>
@@ -43,4 +44,5 @@
     <!-- Script Exec Preferences -->
     <string name="log_text_size_title">Log Text Size</string>
     <string name="log_text_size_summary">01/01 12:00:00: Sample log text</string>
+    <string name="title_activity_debug_exception_viewer">Debug Exception Viewer</string>
 </resources>
