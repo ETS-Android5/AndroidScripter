@@ -78,16 +78,19 @@ class ScriptAccessService : AccessibilityService() {
 
     override fun onInterrupt() {}
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        // get the source node of the event
-        var source = "null"
-        var typeStr = "?"
-        if (event.source?.text != null) {
-            // nothing, just to remember
-            source = event.source.text.toString()
-        }
-        if (event.source == null) {
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event == null) {
             return
+        }
+        // get the source node of the event
+        var sourceStr = "null"
+        var typeStr = "?"
+
+        val sourceObj = event.source ?: return
+        val sourceText = sourceObj.text
+        if (sourceText != null) {
+            // nothing, just to remember
+            sourceStr = sourceText.toString()
         }
 
 //        lastNode?.dec()
@@ -109,7 +112,7 @@ class ScriptAccessService : AccessibilityService() {
                 typeStr = "VIEW_CLICKED"
         }
 
-        Log.d(TAG, "eventType: %x (%s), text: %s".format(event.eventType, typeStr, source))
+        Log.d(TAG, "eventType: %x (%s), text: %s".format(event.eventType, typeStr, sourceStr))
         Log.d(TAG, "package: ${event.packageName}, type: ${event.className}")
 
         if (event.source?.text != "DUMMY") {
