@@ -84,7 +84,7 @@ class UncaughtExceptionHandler(val context: Context): Thread.UncaughtExceptionHa
                 }
 
             } catch (e: JSONException) {
-                Log.e(TAG, e.message)
+                Log.e(TAG, e.message?:"")
             } catch (e: Exception) {
                 Log.e(TAG, "Unknown error in getExceptionHistory: " + e.message)
             }

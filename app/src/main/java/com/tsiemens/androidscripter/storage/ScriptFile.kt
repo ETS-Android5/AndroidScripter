@@ -115,7 +115,7 @@ class ScriptFileStorage(val context: Context) {
                     scripts[scriptFile.key.index] = (scriptFile)
                 }
             } catch (e: JSONException) {
-                Log.e(TAG, e.message)
+                Log.e(TAG, e.message?:"")
             }
         }
 
