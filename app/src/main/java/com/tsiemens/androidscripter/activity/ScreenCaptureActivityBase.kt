@@ -1,5 +1,6 @@
 package com.tsiemens.androidscripter.activity
 
+import android.annotation.SuppressLint
 import android.hardware.display.VirtualDisplay
 import android.graphics.Bitmap
 import android.hardware.display.DisplayManager
@@ -9,6 +10,8 @@ import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import android.media.projection.MediaProjection
 import android.content.Context
+import android.graphics.ImageFormat
+import android.graphics.PixelFormat
 import android.graphics.Point
 import android.media.Image
 import android.media.ImageReader
@@ -16,6 +19,7 @@ import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
+import com.tsiemens.androidscripter.service.ScreenCapNotificationService
 import com.tsiemens.androidscripter.util.BitmapUtil
 import com.tsiemens.androidscripter.util.NTObjPtr
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -155,6 +159,18 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
         stopProjection()
     }
 
+    @SuppressLint("WrongConstant")
+    fun newImageReader(): ImageReader {
+        // SuppressLint is for PixelFormat. The documentation says that this format can be any
+        // constant from PixelFormat, but the implementation appears to not understand this.
+        // We need a value of 1 here, which is RGBA_8888. Pretty much anything else seems to cause
+        // a crash when getPlanes was called.
+        // https://developer.android.com/reference/android/media/ImageReader#newInstance(int,%20int,%20int,%20int)
+        return ImageReader.newInstance(imgReaderWidth, imgReaderHeight,
+            PixelFormat.RGBA_8888,
+            DisplayImage.MAX_OPEN_IMAGES)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "onActivityResult requestCode: $requestCode, data: $data")
         if (requestCode == SCREENCAP_REQUEST_CODE) {
@@ -181,8 +197,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
                 // For some reason, the format is supposed to be 1, even though no constant in ImageFormat
                 // has this value. Unsure why at this point.
                 // Demo was using JPEG, but this caused a crash when getPlanes was called.
-                imageReader = ImageReader.newInstance(imgReaderWidth, imgReaderHeight, 1,
-                    DisplayImage.MAX_OPEN_IMAGES)
+                imageReader = newImageReader()
                 projection!!.createVirtualDisplay(
                     "screencap",
                     imgReaderWidth,
@@ -197,6 +212,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
                 imageReader!!.setOnImageAvailableListener(this, looperHandler)
             } else {
                 Toast.makeText(this, "Unable to start screen capture", Toast.LENGTH_LONG).show()
+                stopService(Intent(this, ScreenCapNotificationService::class.java))
             }
         }
 
@@ -206,6 +222,9 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     fun startProjection() {
         Log.i(TAG, "startProjection")
         projecting = true
+        // This service is required after API 29 as a notification to the user that we're recording
+        // the screen.
+        startService(Intent(this, ScreenCapNotificationService::class.java))
         startActivityForResult(projectionManager!!.createScreenCaptureIntent(),
             SCREENCAP_REQUEST_CODE
         )
@@ -217,6 +236,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
         looperHandler.post {
             projection?.stop()
             projection = null
+            stopService(Intent(this, ScreenCapNotificationService::class.java))
         }
     }
 

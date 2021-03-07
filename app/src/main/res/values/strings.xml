@@ -45,4 +45,7 @@
     <string name="log_text_size_title">Log Text Size</string>
     <string name="log_text_size_summary">01/01 12:00:00: Sample log text</string>
     <string name="title_activity_debug_exception_viewer">Debug Exception Viewer</string>
+
+    <!-- Notification Strings -->
+    <string name="screen_cap_notification_text">Android Scripter is able to see the screen content</string>
 </resources>
