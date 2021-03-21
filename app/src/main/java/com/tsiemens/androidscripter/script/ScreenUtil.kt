@@ -7,6 +7,7 @@ import org.opencv.core.MatOfFloat4
 import java.security.MessageDigest
 import kotlin.math.abs
 import kotlin.math.hypot
+import kotlin.math.min
 
 data class ScreenSignature(val width: Int, val height: Int, val hash: String)
 
@@ -156,8 +157,23 @@ class ScreenUtil {
         }
 
         fun findXsInMat(img: Mat, imgWidth: Int, imgHeight: Int): XDetectResult {
-            // This should be twice the size of the X we're looking for.
-            val lsd = org.opencv.ximgproc.Ximgproc.createFastLineDetector()
+            val lenThresh = 7
+            // These are just default values specified in
+            // https://docs.opencv.org/master/df/ded/group__ximgproc__fast__line__detector.html
+            val distThresh = 1.414213562f
+            val cannyTh1 = 50.0
+            val cannyTh2 = 50.0
+            val cannyApertureSize = 3
+            val doMerge = false
+//            val lsd = org.opencv.ximgproc.Ximgproc.createFastLineDetector()
+            val lsd = org.opencv.ximgproc.Ximgproc.createFastLineDetector(
+                lenThresh,
+                distThresh,
+                cannyTh1,
+                cannyTh2,
+                cannyApertureSize,
+                doMerge
+            )
             val linesMat = MatOfFloat4()
             lsd.detect(img, linesMat)
 
@@ -199,7 +215,6 @@ class ScreenUtil {
 
             Log.d(TAG, "Done finding segments. Found $nCandiLines")
 
-            val centerDist = 15.0
             val xs = arrayListOf<Cross>()
             for (i in 0 until nCandiLines) {
                 val line = candiLines[i]
@@ -207,6 +222,9 @@ class ScreenUtil {
                 if (lineType != Line.LineType.NW_SE) {
                     continue
                 }
+
+                // Max distance between the line points at the center of the candidate X.
+                val maxCenterDist = min(15.0, line.len() * 0.7)
 
                 val cross = Cross(line)
                 /* line -> \ /
@@ -218,7 +236,7 @@ class ScreenUtil {
                         // Diagonal candidate
                         dist = pointDist(line.eastX(), line.eastY(),
                             otherLine.westX(), otherLine.westY())
-                        if (dist <= centerDist) {
+                        if (dist <= maxCenterDist) {
                             cross.se = otherLine
                             return true
                         }
@@ -226,13 +244,13 @@ class ScreenUtil {
                         // Other is /
                         dist = pointDist(line.eastX(), line.eastY(),
                             otherLine.eastX(), otherLine.eastY())
-                        if (dist <= centerDist) {
+                        if (dist <= maxCenterDist) {
                             cross.sw = otherLine
                             return true
                         }
                         dist = pointDist(line.eastX(), line.eastY(),
                             otherLine.westX(), otherLine.westY())
-                        if (dist <= centerDist) {
+                        if (dist <= maxCenterDist) {
                             cross.ne = otherLine
                             return true
                         }
@@ -326,6 +344,9 @@ class ScreenUtil {
         fun eastY(): Double = if (x1() < x2()) { y2() } else { y1() }
 
         fun type(): LineType = if (westY() < eastY()) { LineType.NW_SE } else { LineType.SW_NE }
+
+        fun len(): Double = Math.sqrt(Math.pow(abs(x1() - x2()), 2.0) +
+                                      Math.pow(abs(x1() - x2()), 2.0))
 
         override fun toString(): String {
             val sb = StringBuilder()
