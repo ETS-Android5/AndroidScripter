@@ -6,6 +6,7 @@ import com.chaquo.python.PyException
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import java.lang.Exception
 
 class Script(context: Context, modName: String, scriptCode: String) {
     val module: PyObject
@@ -35,6 +36,10 @@ class Script(context: Context, modName: String, scriptCode: String) {
                 api.logInternal("SCRIPT EXCEPTION: ${e.message}",
                     level=Api.LogLevel.ERROR)
             }
+        } catch (e: Exception) {
+            Log.e(TAG, e.message?:"")
+            api.logInternal("JAVA EXCEPTION: ${e.message}",
+                level=Api.LogLevel.ERROR)
         }
     }
 

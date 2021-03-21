@@ -24,6 +24,11 @@
             android:orderInCategory="100"
             app:showAsAction="never"/>
 
+    <item android:id="@+id/action_launch_pointer_debug_activity"
+            android:title="@string/title_activity_debug_pointer_viewer"
+            android:orderInCategory="100"
+            app:showAsAction="never"/>
+
     <item android:id="@+id/action_licenses"
             android:title="License"
             android:orderInCategory="100"

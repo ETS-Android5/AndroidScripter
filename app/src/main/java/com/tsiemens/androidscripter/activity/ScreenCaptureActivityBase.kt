@@ -10,7 +10,6 @@ import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import android.media.projection.MediaProjection
 import android.content.Context
-import android.graphics.ImageFormat
 import android.graphics.PixelFormat
 import android.graphics.Point
 import android.media.Image
@@ -95,7 +94,11 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     private var imgReaderHeight = 0
     private var imgReaderWidth = 0
 
-    private var lastImgPtr = NTObjPtr<DisplayImage>()
+    private var lastImgPtr = NTObjPtr.new<DisplayImage>()
+
+    // This ties into the ref counting infrastructure, so we can debug if any instances
+    // of this activity type are left undestroyed.
+    private var selfCounter = NTObjPtr.new<ScreenCaptureActivityBase>()
 
     companion object {
         private val TAG = ScreenCaptureActivityBase::class.java.simpleName
@@ -139,6 +142,8 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        selfCounter.track(this) { _ -> }
+
         // call for the projection manager
         projectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
 
@@ -157,6 +162,7 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
         super.onDestroy()
         lastImgPtr.untrack()
         stopProjection()
+        selfCounter.untrack()
     }
 
     @SuppressLint("WrongConstant")
@@ -221,6 +227,16 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
 
     fun startProjection() {
         Log.i(TAG, "startProjection")
+
+        val openImages = DisplayImage.openImages
+        val supposedOpenImages = if (lastImgPtr.obj() == null) 0 else 1
+        if (openImages != supposedOpenImages) {
+            Toast.makeText(this,
+                        "Warning: There are unexpected open screen images ($openImages). " +
+                        "Expected $supposedOpenImages",
+                            Toast.LENGTH_LONG).show()
+        }
+
         projecting = true
         // This service is required after API 29 as a notification to the user that we're recording
         // the screen.

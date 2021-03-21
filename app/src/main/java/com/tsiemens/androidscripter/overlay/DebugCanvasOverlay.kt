@@ -246,12 +246,13 @@ class DebugOverlayManager(activity: Activity):
         }
     }
 
-    fun getScreenPoint(x: Float, y: Float, isPercent: Boolean): Point {
+    fun getScreenPoint(x: Float, y: Float, isPercent: Boolean): Point? {
         val realX: Int
         val realY: Int
         if (isPercent) {
-            realX = ((overlay!!.root.screenWidth - 1) * x).toInt()
-            realY = ((overlay!!.root.screenHeight - 1) * y).toInt()
+            val overlayLocal = overlay ?: return null
+            realX = ((overlayLocal.root.screenWidth - 1) * x).toInt()
+            realY = ((overlayLocal.root.screenHeight - 1) * y).toInt()
         } else {
             realX = x.toInt()
             realY = y.toInt()
@@ -261,15 +262,34 @@ class DebugOverlayManager(activity: Activity):
 
     fun onPointInspected(x: Float, y: Float, isPercent: Boolean) {
         val point = getScreenPoint(x, y, isPercent)
-        activity.runOnUiThread {
-            overlay!!.root.addPointIndicator(point)
+        if (point != null) {
+            activity.runOnUiThread {
+                val overlayRoot = overlay?.root
+                if (overlayRoot != null) {
+                    overlayRoot.addPointIndicator(point)
+                } else {
+                    Log.w(TAG, "onPointInspected: Could not get overlay root")
+                }
+            }
+        } else {
+            Log.w(TAG, "onPointInspected: Could not get point")
         }
     }
 
     override fun onClickSent(x: Float, y: Float, isPercent: Boolean) {
         val point = getScreenPoint(x, y, isPercent)
-        activity.runOnUiThread {
-            overlay!!.root.addClick(point)
+        if (point != null) {
+            activity.runOnUiThread {
+                val overlayRoot = overlay?.root
+                if (overlayRoot != null) {
+                    overlayRoot.addClick(point)
+                    overlayRoot.addPointIndicator(point)
+                } else {
+                    Log.w(TAG, "onPointInspected: Could not get overlay root")
+                }
+            }
+        } else {
+            Log.w(TAG, "onClickSent: Could not get point")
         }
     }
 

@@ -106,6 +106,10 @@ class ScriptListActivity : AppCompatActivity() {
                 startActivity(Intent(this, DebugExceptionViewerActivity::class.java))
                 true
             }
+            R.id.action_launch_pointer_debug_activity -> {
+                startActivity(Intent(this, DebugNTObjPtrViewerActivity::class.java))
+                true
+            }
             R.id.action_licenses -> {
                 LicenseDialog().show(supportFragmentManager, "License dialog")
                 true

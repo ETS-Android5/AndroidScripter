@@ -22,8 +22,6 @@ import com.tsiemens.androidscripter.script.Script
 import com.tsiemens.androidscripter.script.Api
 import com.tsiemens.androidscripter.script.ScriptLogManager
 import com.tsiemens.androidscripter.storage.*
-import com.tsiemens.androidscripter.thread.UncaughtException
-import com.tsiemens.androidscripter.thread.UncaughtExceptionHandler
 import com.tsiemens.androidscripter.util.BitmapUtil
 import com.tsiemens.androidscripter.util.ColorCompat
 import com.tsiemens.androidscripter.util.UiUtil
@@ -350,6 +348,10 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                 if (scriptFile.key.type == ScriptType.user) {
                     deleteUserScript()
                 }
+                true
+            }
+            R.id.action_launch_pointer_debug_activity -> {
+                startActivity(Intent(this, DebugNTObjPtrViewerActivity::class.java))
                 true
             }
             else -> super.onOptionsItemSelected(item)
