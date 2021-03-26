@@ -184,37 +184,36 @@ class OverlayManager(val activity: Activity,
     }
 
     override fun destroy() {
-        if (overlay != null) {
-            wm!!.removeView(overlay!!.root)
-            overlay = null
-        }
+        val ol = overlay?: return
+        wm!!.removeView(ol.root)
+        overlay = null
     }
 
     private fun changePanelVisibility(panelId: Int) {
-        if (overlay != null) {
-            val panelIds = arrayOf(
-                R.id.overlay_log_panel,
-                R.id.overlay_point_analysis_panel,
-                R.id.overlay_ocr_panel
-            )
-            panelIds.forEach { id ->
-                val panel = overlay!!.root.findViewById<View>(id)
-                panel.visibility = if (id == panelId) View.VISIBLE else View.GONE
-            }
+        val ol = overlay?: return
+        val panelIds = arrayOf(
+            R.id.overlay_log_panel,
+            R.id.overlay_point_analysis_panel,
+            R.id.overlay_ocr_panel
+        )
+        panelIds.forEach { id ->
+            val panel = ol.root.findViewById<View>(id)
+            panel.visibility = if (id == panelId) View.VISIBLE else View.GONE
         }
     }
 
     // ************************* Screen Analysis methods *****************************
     @SuppressLint("SetTextI18n")
     fun updatePointDebugText(point: Point, screenSize: DisplayMetrics, color: ColorCompat) {
-        overlay!!.root.findViewById<TextView>(R.id.screen_size_tv).setText(
+        val ol = overlay?: return
+        ol.root.findViewById<TextView>(R.id.screen_size_tv).setText(
             "${screenSize.widthPixels}x${screenSize.heightPixels}")
 
-        overlay!!.root.findViewById<TextView>(R.id.location_coords_tv).setText(
+        ol.root.findViewById<TextView>(R.id.location_coords_tv).setText(
             "${point.x}x${point.y}")
 
-        overlay!!.root.findViewById<TextView>(R.id.color_code_tv).setText("#$color")
-        overlay!!.root.findViewById<TextView>(R.id.color_square_tv).setTextColor(color.value)
+        ol.root.findViewById<TextView>(R.id.color_code_tv).setText("#$color")
+        ol.root.findViewById<TextView>(R.id.color_square_tv).setTextColor(color.value)
     }
 
     fun updateScreenCaptureViewer(bm: Bitmap) {
@@ -224,10 +223,9 @@ class OverlayManager(val activity: Activity,
     // ************************* END Point Analysis methods *****************************
 
     fun updateOcrText(text: String) {
-        if (overlay != null) {
-            val ocrTv = overlay!!.root.findViewById<TextView>(R.id.screen_textview)
-            ocrTv.text = text
-        }
+        val ol = overlay?: return
+        val ocrTv = ol.root.findViewById<TextView>(R.id.screen_textview)
+        ocrTv.text = text
     }
 
     fun setOnCaptureTextButtonClick(cl: View.OnClickListener) {
