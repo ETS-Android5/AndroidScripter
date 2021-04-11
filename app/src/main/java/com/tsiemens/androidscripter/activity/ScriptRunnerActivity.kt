@@ -319,6 +319,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
 
     override fun onDestroy() {
         stopAllOverlays()
+        stopThread()
         super.onDestroy()
     }
 

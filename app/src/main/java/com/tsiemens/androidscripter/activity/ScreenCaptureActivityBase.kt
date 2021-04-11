@@ -258,6 +258,10 @@ abstract class ScreenCaptureActivityBase : AppCompatActivity(), ImageReader.OnIm
 
     // from OnImageAvailableListener
     override fun onImageAvailable(p0: ImageReader?) {
+        if (isDestroyed()) {
+            // We will leak references on DisplayImage if we take a reference after onDestroy
+            return
+        }
         Log.d(TAG, "onImageAvailable")
         val openImages = DisplayImage.openImages
         if (openImages >= DisplayImage.MAX_OPEN_IMAGES) {

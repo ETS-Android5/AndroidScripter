@@ -1,8 +1,11 @@
 package com.tsiemens.androidscripter.util
 
+import android.util.Log
+import com.tsiemens.androidscripter.activity.ScriptRunnerActivity
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
+private const val TAG = "NTObjPtr"
 
 class NTObjPtrMetrics(val displayName: String) {
     var instanceCount: Long = 0
@@ -94,6 +97,7 @@ class NTObjPtr<T> protected constructor(val metrics: NTObjPtrMetrics) {
     }
 
     fun track(t: T, destroyer: (T) -> Unit) {
+        Log.d(TAG, "track: $t")
         val newWrapper = NTObjWrapper(t, destroyer, metrics)
         newWrapper.inc()
         wrapper?.dec()
@@ -101,6 +105,7 @@ class NTObjPtr<T> protected constructor(val metrics: NTObjPtrMetrics) {
     }
 
     fun track(p: NTObjPtr<T>) {
+        Log.d(TAG, "track: $p")
         val newWrapper = p.wrapper?.tryIncAndGet()
         wrapper?.dec()
         wrapper = newWrapper
@@ -110,8 +115,8 @@ class NTObjPtr<T> protected constructor(val metrics: NTObjPtrMetrics) {
      * the execution. */
     fun trackFor(action: (t: T?) -> Unit) {
         val tmpPtr = NTObjPtr<T>(metrics)
-        tmpPtr.track(this)
         try {
+            tmpPtr.track(this)
             action(tmpPtr.obj())
         } finally {
             tmpPtr.untrack()
@@ -119,6 +124,7 @@ class NTObjPtr<T> protected constructor(val metrics: NTObjPtrMetrics) {
     }
 
     fun untrack() {
+        Log.d(TAG, "untrack: $wrapper")
         wrapper?.dec()
         wrapper = null
     }
