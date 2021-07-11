@@ -1,5 +1,5 @@
 import java
-from typing import Set
+from typing import List, Set
 
 class Api:
     _jLogLevel = java.jclass("com.tsiemens.androidscripter.script.Api$LogLevel")
@@ -51,6 +51,12 @@ class Api:
 
     def find_xs_in_screen(self, show_debug_overlay=True):
         return self._api.findXsInScreen(show_debug_overlay)
+
+    def extract_text_in_screen(self) -> List[str]:
+        res = self._api.extractTextInScreen()
+        if res is not None:
+            return [s for s in res.toArray()]
+        return None
 
     def is_network_metered(self):
         '''

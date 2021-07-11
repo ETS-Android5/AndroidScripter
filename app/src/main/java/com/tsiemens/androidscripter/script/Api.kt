@@ -9,6 +9,7 @@ import android.util.DisplayMetrics
 import android.util.Log
 import com.tsiemens.androidscripter.getUsageStatsForegroundActivityName
 import com.tsiemens.androidscripter.inspect.ScreenProvider
+import com.tsiemens.androidscripter.ml.MlKitOcrHelper
 import com.tsiemens.androidscripter.notify.ScreenInspectionListener
 import com.tsiemens.androidscripter.service.ScriptAccessService
 import com.tsiemens.androidscripter.service.ServiceBcastClient
@@ -31,6 +32,7 @@ class Api(val ctx: Context,
     val paused = AtomicBoolean(false)
 
     val serviceClient = ServiceBcastClient(ctx)
+    val mlKitOcrHelper = MlKitOcrHelper()
 
     companion object {
         val TAG = Api::class.java.simpleName
@@ -162,6 +164,21 @@ class Api(val ctx: Context,
             Log.e(TAG, "findXsInScreen: could not get screen cap")
         }
         return ScreenXsResult(null, null, null, false)
+    }
+
+    fun extractTextInScreen(): List<String>? {
+        val bm = getScreenCap()
+        if (bm != null) {
+            Log.d(TAG, "extractTextInScreen on $bm")
+            val text = mlKitOcrHelper.extractText(bm) ?: return null
+            val textBlocks = arrayListOf<String>()
+            for (tb in text.textBlocks) {
+                textBlocks.add(tb.text)
+            }
+            return textBlocks
+        }
+        Log.e(TAG, "extractTextInScreen: could not get screen cap")
+        return null
     }
 
     private fun networkCapabilities(): NetworkCapabilities? {
