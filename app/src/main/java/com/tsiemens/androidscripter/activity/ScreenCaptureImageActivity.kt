@@ -3,7 +3,6 @@ package com.tsiemens.androidscripter.activity
 import android.content.Context
 import android.content.Context.WIFI_SERVICE
 import android.graphics.Bitmap
-import android.content.Intent
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.Looper
@@ -18,7 +17,6 @@ import android.widget.Toast
 import com.tsiemens.androidscripter.overlay.DebugOverlayManager
 import com.tsiemens.androidscripter.overlay.OverlayManager
 import com.tsiemens.androidscripter.R
-import com.tsiemens.androidscripter.TesseractHelper
 import com.tsiemens.androidscripter.script.ScreenUtil
 import com.tsiemens.androidscripter.script.ScriptLogManager
 import fi.iki.elonen.NanoHTTPD
@@ -31,8 +29,6 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
     private var mImgView : ImageView? = null
     lateinit private var serverLocationText : TextView
 
-    private var lastImgText: String? = null
-
     // Set here for testing only
     val logManager = ScriptLogManager()
     val overlayManager = OverlayManager(
@@ -44,16 +40,12 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
 
     val debugOverlayManager = DebugOverlayManager(this)
 
-    lateinit var tessHelper: TesseractHelper
-
     lateinit var screenCapClient: ScreenCaptureClient
 
     var httpd: ImgHttpd? = null
 
     companion object {
         private val TAG = ScreenCaptureImageActivity::class.java.simpleName
-        private val PREPARE_TESS_PERMISSION_REQUEST_CODE =
-            MIN_REQUEST_CODE
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,14 +68,7 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
 
         screenCapClient = object : ScreenCaptureClient() {
                 override fun onScreenCap(bm: Bitmap, imgId: Long) {
-                    val imgText = tessHelper.extractText(bm)
-                    lastImgText = imgText
-                    Log.i(TAG, "Image text: \"$imgText\"")
-
                     val action = {
-                        if (imgText != null) {
-                            overlayManager.updateOcrText(imgText)
-                        }
                         mImgView!!.setImageBitmap(bm)
                     }
                     val newBm = ScreenUtil.toGray(bm)
@@ -101,12 +86,6 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
             }
         setScreenCaptureClient(screenCapClient)
 
-        tessHelper = TesseractHelper(
-            this,
-            PREPARE_TESS_PERMISSION_REQUEST_CODE
-        )
-        tessHelper.prepareTesseract(true)
-
         try {
             httpd = ImgHttpd(this)
             httpd!!.doStart()
@@ -122,15 +101,6 @@ class ScreenCaptureImageActivity : ScreenCaptureActivityBase() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        Log.d(TAG, "onActivityResult $requestCode")
-        if (requestCode == PREPARE_TESS_PERMISSION_REQUEST_CODE) {
-            tessHelper.prepareTesseract(false)
-        }
-
-        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onResume() {

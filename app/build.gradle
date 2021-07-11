@@ -55,7 +55,6 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
-    implementation 'com.rmtheis:tess-two:9.0.0'
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
     implementation project(path: ':libraries:openCVLibrary340dev')
     implementation 'com.google.android.gms:play-services-mlkit-text-recognition:16.3.0'

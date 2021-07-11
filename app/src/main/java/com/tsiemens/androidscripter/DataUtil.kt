@@ -22,41 +22,5 @@ class DataUtilHelper(val ctx: Context) {
             return reader.readText()
         }
     }
-
-    /*
-    private fun copyTessDataFiles(path: String) {
-        try {
-            val fileList = getAssets().list(path)
-
-            for (fileName in fileList) {
-
-                // open file within the assets folder
-                // if it is not already there copy it to the sdcard
-                val pathToDataFile = DATA_PATH + path + "/" + fileName
-                if (!File(pathToDataFile).exists()) {
-
-                    val `in` = getAssets().open("$path/$fileName")
-
-                    val out = FileOutputStream(pathToDataFile)
-
-                    // Transfer bytes from in to out
-                    val buf = ByteArray(1024)
-                    var len: Int
-
-                    while ((len = `in`.read(buf)) > 0) {
-                        out.write(buf, 0, len)
-                    }
-                    `in`.close()
-                    out.close()
-
-                    Log.d(TAG, "Copied " + fileName + "to tessdata")
-                }
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "Unable to copy files to tessdata " + e.toString())
-        }
-    }
-    */
-
 }
 

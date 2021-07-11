@@ -48,8 +48,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     )
     val debugOverlayManager = DebugOverlayManager(this)
 
-    lateinit var tessHelper: TesseractHelper
-
     lateinit var screenCapClient: ScreenCaptureClient
 
     val dataHelper = DataUtilHelper(this)
@@ -84,8 +82,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         val INTENT_EXTRA_SCRIPT_KEY = "script_key"
 
         private val TAG = ScriptRunnerActivity::class.java.simpleName
-        private val PREPARE_TESS_PERMISSION_REQUEST_CODE =
-            MIN_REQUEST_CODE
 
         val globalThreadListLock = ReentrantReadWriteLock()
         val globalThreadList = arrayListOf<Thread>()
@@ -185,12 +181,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                 }
             }
         setScreenCaptureClient(screenCapClient)
-
-        tessHelper = TesseractHelper(
-            this,
-            PREPARE_TESS_PERMISSION_REQUEST_CODE
-        )
-        tessHelper.prepareTesseract(true)
     }
 
     private fun updateScriptDetailsViews() {
@@ -239,15 +229,6 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        Log.d(TAG, "onActivityResult $requestCode")
-        if (requestCode == PREPARE_TESS_PERMISSION_REQUEST_CODE) {
-            tessHelper.prepareTesseract(false)
-        }
-
-        super.onActivityResult(requestCode, resultCode, data)
     }
 
     private fun enableOverlay(enable: Boolean) {
