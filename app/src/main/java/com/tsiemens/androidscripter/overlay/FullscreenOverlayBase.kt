@@ -130,6 +130,11 @@ abstract class FullscreenOverlayManagerBase<T: View>(val activity: Activity,
 
         params!!.gravity = (Gravity.START or Gravity.TOP)
         params!!.title = title
+        // Android 12 added security restrictions on overlays that can allow pass-through
+        // touch events. It has an exception for windows with an alpha of less than 0.8 though.
+        if (params!!.alpha >= 0.8) {
+            params!!.alpha = 0.79f
+        }
         wm!!.addView(overlayRoot, params)
     }
 

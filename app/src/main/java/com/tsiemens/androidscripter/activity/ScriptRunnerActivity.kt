@@ -18,9 +18,7 @@ import com.tsiemens.androidscripter.inspect.ScreenProvider
 import com.tsiemens.androidscripter.notify.ScreenInspectionListener
 import com.tsiemens.androidscripter.overlay.DebugOverlayManager
 import com.tsiemens.androidscripter.overlay.OverlayManager
-import com.tsiemens.androidscripter.script.Script
-import com.tsiemens.androidscripter.script.Api
-import com.tsiemens.androidscripter.script.ScriptLogManager
+import com.tsiemens.androidscripter.script.*
 import com.tsiemens.androidscripter.storage.*
 import com.tsiemens.androidscripter.util.BitmapUtil
 import com.tsiemens.androidscripter.util.ColorCompat
@@ -391,6 +389,12 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         if (scriptThread != null) {
             setPaused(false)
         } else if (script == null && scriptCode != null) {
+            if (!tryGetApiPermissions(this)) {
+                // We don't have permissions for all the API endpoints yet. The above will have
+                // launched an activity to acquire them (start the accessibility service). The
+                // start button will need to be pressed a second time when the user returns.
+                return
+            }
             try {
                 scriptApi.paused.set(false)
                 script = Script(

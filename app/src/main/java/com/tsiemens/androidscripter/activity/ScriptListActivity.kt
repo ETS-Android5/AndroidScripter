@@ -8,14 +8,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.view.*
 import android.widget.TextView
-import com.tsiemens.androidscripter.service.AccessibilitySettingDialogFragment
 import com.tsiemens.androidscripter.R
 import com.tsiemens.androidscripter.dialog.LicenseDialog
-import com.tsiemens.androidscripter.service.ScriptAccessService
 import com.tsiemens.androidscripter.dialog.ScriptEditDialog
-import com.tsiemens.androidscripter.service.isMyServiceRunning
 import com.tsiemens.androidscripter.storage.*
-import com.tsiemens.androidscripter.tryGuaranteeUsageStatsAccess
 import com.tsiemens.androidscripter.widget.RecyclerViewClickListener
 
 import kotlinx.android.synthetic.main.activity_script_list.*
@@ -124,26 +120,7 @@ class ScriptListActivity : AppCompatActivity() {
         viewAdapter.notifyDataSetChanged()
     }
 
-    /**
-     * @return: true if permissions were already granted.
-     *          false if the user is going to need to take some action which is not guaranteed
-     *              complete on return
-     */
-    private fun tryGetPermissions(): Boolean {
-        var alreadyGranted = tryGuaranteeUsageStatsAccess(this)
-
-        if (!isMyServiceRunning(this, ScriptAccessService::class.java)) {
-            AccessibilitySettingDialogFragment()
-                .show(supportFragmentManager, "")
-            alreadyGranted = false
-        }
-        return alreadyGranted
-    }
-
     private fun startScriptActivity(key: ScriptKey) {
-        if (!tryGetPermissions()) {
-            return
-        }
         // Run this on a very slight delay, to allow the ripple effect to take effect before
         // interrupting the UI thread to spawn the activity.
         Handler(mainLooper).postDelayed( {
