@@ -3,6 +3,8 @@ package com.tsiemens.androidscripter.util
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.Rect
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Surface
 import java.lang.Integer.max
@@ -128,6 +130,39 @@ class BitmapUtil {
                 return bitmap
             }
             return Bitmap.createBitmap(bitmap, leftPadding, topPadding, newWidth, newHeight)
+        }
+
+        /** rect: This area should be in terms of the display size.
+         * */
+        fun cropScreenshotToSubArea(rawBm: Bitmap, rect: Rect, displaySize: DisplayMetrics): Bitmap? {
+            val bm = cropScreenshotPadding(rawBm)
+
+            val inPortrait = bm.height > bm.width
+            val rotatedDisplayWidth = if (inPortrait) displaySize.widthPixels
+                                    else displaySize.heightPixels
+            val rotatedDisplayHeight = if (inPortrait) displaySize.heightPixels
+                                    else displaySize.widthPixels
+
+            val widthRatio = bm.width.toFloat()/rotatedDisplayWidth.toFloat()
+            val heightRatio = bm.height.toFloat()/rotatedDisplayHeight.toFloat()
+
+
+            val cropX = (rect.left * widthRatio).toInt()
+            val cropY = (rect.top * heightRatio).toInt()
+            val cropWidth = (rect.width() * widthRatio).toInt()
+            val cropHeight = (rect.height() * heightRatio).toInt()
+            Log.d(TAG, "cropScreenshotToSubArea: cropping bitmap "+
+                    "dimens ${bm.width}x${bm.height} to x: $cropX, y: $cropY, "+
+                    "w: $cropWidth, h: $cropHeight. displaySize: "+
+                    "${displaySize.widthPixels} x ${displaySize.heightPixels}")
+            try {
+                return Bitmap.createBitmap(bm, cropX, cropY, cropWidth, cropHeight)
+            } catch (e: java.lang.IllegalArgumentException) {
+                // Tolerate the area not matching the screen. This could happen
+                // regularly depending on the orientation.
+                Log.i(TAG, "cropScreenshotToSubArea: bitmap crop threw error")
+            }
+            return null
         }
 
         // Used by color.py

@@ -3,6 +3,7 @@ package com.tsiemens.androidscripter.script
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
+import android.graphics.Rect
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.DisplayMetrics
@@ -166,10 +167,21 @@ class Api(val ctx: Context,
         return ScreenXsResult(null, null, null, false)
     }
 
-    fun extractTextInScreen(): List<String>? {
-        val bm = getScreenCap()
+    fun extractTextInScreen(area: Rect?): List<String>? {
+        if (area != null) {
+            screenInspectionListener?.onAreaInspected(area)
+        }
+        var bm = getScreenCap()
         if (bm != null) {
-            Log.d(TAG, "extractTextInScreen on $bm")
+            Log.d(TAG, "extractTextInScreen with area: $area")
+            if (area != null) {
+                bm = BitmapUtil.cropScreenshotToSubArea(bm, area, UiUtil.getDisplaySize(ctx))
+                if (bm == null) {
+                    Log.e(TAG, "extractTextInScreen: could not crop bitmap.")
+                    return null
+                }
+            }
+
             val text = mlKitOcrHelper.extractText(bm) ?: return null
             val textBlocks = arrayListOf<String>()
             for (tb in text.textBlocks) {

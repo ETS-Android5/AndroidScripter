@@ -2,6 +2,7 @@ package com.tsiemens.androidscripter.activity
 
 import android.graphics.Bitmap
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatImageButton
@@ -524,4 +525,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         debugOverlayManager.onPointInspected(x, y, isPercent)
         overlayManager.onPointInspected(x, y, color, isPercent)
     }
+
+    override fun onAreaInspected(rect: Rect) {
+        debugOverlayManager.onAreaInspected(rect)
+    }
+
 }

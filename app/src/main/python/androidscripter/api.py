@@ -3,6 +3,7 @@ from typing import List, Set
 
 class Api:
     _jLogLevel = java.jclass("com.tsiemens.androidscripter.script.Api$LogLevel")
+    _jRect = java.jclass("android.graphics.Rect")
 
     def __init__(self, api):
         self._api = api
@@ -52,8 +53,14 @@ class Api:
     def find_xs_in_screen(self, show_debug_overlay=True):
         return self._api.findXsInScreen(show_debug_overlay)
 
-    def extract_text_in_screen(self) -> List[str]:
-        res = self._api.extractTextInScreen()
+    def extract_text_in_screen(self, area=None) -> List[str]:
+        """
+        :param area: a tuple of (left, top, right, bottom: int)
+                     to restrict the search to.
+        :return: List of text strings detected
+        """
+        area_rect = Api._jRect(*area) if area else None
+        res = self._api.extractTextInScreen(area_rect)
         if res is not None:
             return [s for s in res.toArray()]
         return None

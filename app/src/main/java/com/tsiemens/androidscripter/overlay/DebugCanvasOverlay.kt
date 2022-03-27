@@ -14,10 +14,27 @@ import java.util.*
 
 enum class PointIndicatorStyle {
     CIRCLE,
+    // Note that square point indicators are fundamentally different than a RECT
+    // shape, since the key information is the point, which is more guaranteed to
+    // translate properly. Indicating points by using the edges has the potential to
+    // not render properly when translated to the canvas coordinates.
     SQUARE
 }
 
-class FadingPointIndicator(val point: Point, val style: PointIndicatorStyle, val paint: Paint) {
+enum class ShapeKind {
+    POINT_INDICATOR,
+    RECT,
+}
+
+// Not particularly space efficient, but fine due to limited shape types and quantity.
+open class Shape(val kind: ShapeKind)
+
+class PointIndicator(val point: Point, val style: PointIndicatorStyle) :
+    Shape(ShapeKind.POINT_INDICATOR)
+
+class RectIndicator(val rect: Rect) : Shape(ShapeKind.RECT)
+
+open class FadingShape(val shape: Shape, val paint: Paint) {
     val animator: ValueAnimator = ValueAnimator.ofInt(255, 0)
     init {
         animator.duration = 2000 // millis
@@ -39,7 +56,7 @@ class DebugCanvasOverlayView(ctx: Context): FullscreenOverlayView(ctx) {
     val pointIndicatorPaint = Paint()
     val xPaint = Paint()
 
-    val points = ArrayDeque<FadingPointIndicator>()
+    val fadingShapes = ArrayDeque<FadingShape>()
     // Cross and expire time
     val xs = ArrayDeque<Pair<ScreenUtil.Cross, Long>>()
     val timedLines = ArrayDeque<Pair<ScreenUtil.Line, Long>>()
@@ -120,43 +137,63 @@ class DebugCanvasOverlayView(ctx: Context): FullscreenOverlayView(ctx) {
             drawX(x.first, canvas)
         }
 
-        for (p in points) {
-            drawPointIndicator(p, canvas)
+        for (s in fadingShapes) {
+            drawFadingShape(s, canvas)
         }
 
         lastDrawHeight = height
         lastDrawWidth = width
     }
 
-    private fun drawPointIndicator(p: FadingPointIndicator, canvas: Canvas) {
-        val alpha = p.animator.animatedValue as Int
-        p.paint.alpha = alpha
+    private fun drawPointIndicator(p: PointIndicator, paint: Paint, canvas: Canvas) {
         when (p.style) {
             PointIndicatorStyle.CIRCLE ->
                 canvas.drawCircle(screenXToCanvasX(p.point.x.toFloat()),
-                                  screenYToCanvasY(p.point.y.toFloat()),
-                    CIRCLE_RADIUS, p.paint)
+                    screenYToCanvasY(p.point.y.toFloat()),
+                    CIRCLE_RADIUS, paint)
             PointIndicatorStyle.SQUARE -> {
                 val canvasXCenter = screenXToCanvasX(p.point.x.toFloat())
                 val canvasYCenter = screenYToCanvasY(p.point.y.toFloat())
                 Log.d(
                     TAG, "drawPointIndicator - canvasSize: ${canvas.width}x${canvas.height} "+
-                                "canvasPos: ${cachedLocationInScreen[0]}x${cachedLocationInScreen[1]} " +
-                                "screen: $screenWidth x $screenHeight")
+                            "canvasPos: ${cachedLocationInScreen[0]}x${cachedLocationInScreen[1]} " +
+                            "screen: $screenWidth x $screenHeight")
                 Log.d(TAG, "drawPointIndicator - canvas x,y: $canvasXCenter, $canvasYCenter")
                 canvas.drawRect(
                     canvasXCenter - SQUARE_HALF_LEN,
                     canvasYCenter - SQUARE_HALF_LEN,
                     canvasXCenter + SQUARE_HALF_LEN,
                     canvasYCenter + SQUARE_HALF_LEN,
-                    p.paint
+                    paint
                 )
             }
         }
+    }
 
-        if (alpha == 0 && points.first == p) {
-            Log.d(TAG, "Cleaned up fading point")
-            points.removeFirst()
+    private fun drawRectIndicator(p: RectIndicator, paint: Paint, canvas: Canvas) {
+        canvas.drawRect(
+            screenXToCanvasX(p.rect.left.toFloat()),
+            screenYToCanvasY(p.rect.top.toFloat()),
+            screenXToCanvasX(p.rect.right.toFloat()),
+            screenYToCanvasY(p.rect.bottom.toFloat()),
+            paint
+        )
+    }
+
+    private fun drawFadingShape(p: FadingShape, canvas: Canvas) {
+        val alpha = p.animator.animatedValue as Int
+        p.paint.alpha = alpha
+
+        when (p.shape.kind) {
+            ShapeKind.POINT_INDICATOR ->
+                drawPointIndicator(p.shape as PointIndicator, p.paint, canvas)
+            ShapeKind.RECT ->
+                drawRectIndicator(p.shape as RectIndicator, p.paint, canvas)
+        }
+
+        if (alpha == 0 && fadingShapes.first == p) {
+            Log.d(TAG, "Cleaned up fading shape")
+            fadingShapes.removeFirst()
         }
     }
 
@@ -179,24 +216,32 @@ class DebugCanvasOverlayView(ctx: Context): FullscreenOverlayView(ctx) {
     }
 
     fun addPointIndicator(p: Point) {
-        val fc = FadingPointIndicator(
-            p,
-            PointIndicatorStyle.SQUARE,
+        val fc = FadingShape(
+            PointIndicator(p, PointIndicatorStyle.SQUARE),
             pointIndicatorPaint
         )
-        points.add(fc)
+        fadingShapes.add(fc)
         Log.d(TAG, "addPointIndicator at ${p.x}, ${p.y} (screen: ${screenSize.widthPixels}, ${screenSize.heightPixels})")
         fc.attachToView(this)
         invalidate()
     }
 
     fun addClick(p: Point) {
-        val fc = FadingPointIndicator(
-            p,
-            PointIndicatorStyle.CIRCLE,
+        val fc = FadingShape(
+            PointIndicator(p, PointIndicatorStyle.CIRCLE),
             clickPaint
         )
-        points.add(fc)
+        fadingShapes.add(fc)
+        fc.attachToView(this)
+        invalidate()
+    }
+
+    fun addInspectAreaIndicator(r: Rect) {
+        val fc = FadingShape(
+            RectIndicator(r),
+            pointIndicatorPaint
+        )
+        fadingShapes.add(fc)
         fc.attachToView(this)
         invalidate()
     }
@@ -273,6 +318,17 @@ class DebugOverlayManager(activity: Activity):
             }
         } else {
             Log.w(TAG, "onPointInspected: Could not get point")
+        }
+    }
+
+    fun onAreaInspected(rect: Rect) {
+        activity.runOnUiThread {
+            val overlayRoot = overlay?.root
+            if (overlayRoot != null) {
+                overlayRoot.addInspectAreaIndicator(rect)
+            } else {
+                Log.w(TAG, "onAreaInspected: Could not get overlay root")
+            }
         }
     }
 
