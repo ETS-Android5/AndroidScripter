@@ -30,6 +30,8 @@ interface ScriptController {
     fun onPausePressed()
     fun onStopPressed()
     fun onRestartPressed()
+    /** Should return true if consumes the long press */
+    fun onRestartLongPressed(): Boolean
     fun getScriptState(): ScriptState
     /** Should return true if the script is in a state where we could start it.
         Should still return true if the script is currently running */
@@ -62,6 +64,7 @@ class ScriptControllerUIHelper(val context: Context,
             }
         }
         restartButton.setOnClickListener { controller.onRestartPressed() }
+        restartButton.setOnLongClickListener { controller.onRestartLongPressed() }
         logScrollView.addOnLayoutChangeListener {
                 view: View, i: Int, i1: Int, i2: Int, i3: Int, i4: Int, i5: Int, i6: Int, i7: Int ->
             scrollLogToBottom()

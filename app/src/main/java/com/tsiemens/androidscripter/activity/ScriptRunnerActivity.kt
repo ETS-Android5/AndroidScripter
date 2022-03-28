@@ -141,6 +141,10 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                 this@ScriptRunnerActivity.onRestartButton()
             }
 
+            override fun onRestartLongPressed(): Boolean {
+                return this@ScriptRunnerActivity.onRestartButtonLongPress()
+            }
+
             override fun getScriptState(): ScriptState {
                 if (scriptThread == null) {
                     return ScriptState.stopped
@@ -187,7 +191,7 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         scriptNameTv.text = scriptFile.name
     }
 
-    private fun loadUserScript(tryStorage: Boolean = true) {
+    private fun loadUserScript(tryStorage: Boolean = true, onSuccess: (()->Unit)?=null) {
         if (tryStorage) {
             scriptCode = scriptStorage.getUserScriptCode(scriptFile as UserScriptFile)
             if (scriptCode != null) {
@@ -205,6 +209,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                 scriptUIControllers.notifyScriptStateChanged()
                 Toast.makeText(this@ScriptRunnerActivity,
                     "Script loaded", Toast.LENGTH_SHORT).show()
+                if (onSuccess != null) {
+                    onSuccess()
+                }
             }
             override fun onError(e: Exception) {
                 Toast.makeText(this@ScriptRunnerActivity,
@@ -414,7 +421,9 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
                     })
 
                 validateGlobalThreadListEmpty()
-                globalThreadList.add(scriptThread!!)
+                globalThreadListLock.write {
+                    globalThreadList.add(scriptThread!!)
+                }
                 scriptUIControllers.notifyScriptStateChanged()
                 scriptThread!!.start()
             } catch (e: PyException) {
@@ -448,15 +457,29 @@ class ScriptRunnerActivity : ScreenCaptureActivityBase(),
         stopThread()
     }
 
-    fun onRestartButton() {
+    fun restartScript() {
         restartingScript = true
         scriptThread?.interrupt()
+    }
+
+    fun onRestartButton() {
+        restartScript()
+    }
+
+    fun onRestartButtonLongPress(): Boolean {
+        loadUserScript(tryStorage = false) {
+            // If we successfully refresh the script, restart it.
+            restartScript()
+        }
+        return true
     }
 
     /** Callback from script runner, when script completes */
     fun onScriptEnded() {
         scriptThread?.apply {
-            globalThreadList.remove(this)
+            globalThreadListLock.write {
+                globalThreadList.remove(this)
+            }
         }
         scriptThread = null
         script = null

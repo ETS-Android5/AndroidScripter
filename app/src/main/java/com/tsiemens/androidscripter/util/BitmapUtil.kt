@@ -119,7 +119,7 @@ class BitmapUtil {
 
             Log.d(TAG, "cropScreenshotPadding: stripping padding: " +
                   "left $leftPadding right $rightPadding top $topPadding bottom $bottomPadding. " +
-                  " bitmap dimens tranform: ${width}x${height} -> ${newWidth}x${newHeight}")
+                  " bitmap dimens transform: ${width}x${height} -> ${newWidth}x${newHeight}")
             if (leftPadding == 0 && rightPadding == 0 && topPadding == 0 && bottomPadding == 0) {
                 return bitmap
             }
@@ -135,6 +135,8 @@ class BitmapUtil {
         /** rect: This area should be in terms of the display size.
          * */
         fun cropScreenshotToSubArea(rawBm: Bitmap, rect: Rect, displaySize: DisplayMetrics): Bitmap? {
+            // Note that bm is somewhat smaller than the display size, so we need to
+            // also scale points up to display size.
             val bm = cropScreenshotPadding(rawBm)
 
             val inPortrait = bm.height > bm.width
@@ -145,7 +147,6 @@ class BitmapUtil {
 
             val widthRatio = bm.width.toFloat()/rotatedDisplayWidth.toFloat()
             val heightRatio = bm.height.toFloat()/rotatedDisplayHeight.toFloat()
-
 
             val cropX = (rect.left * widthRatio).toInt()
             val cropY = (rect.top * heightRatio).toInt()
