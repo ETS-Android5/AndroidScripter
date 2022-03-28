@@ -167,27 +167,32 @@ class Api(val ctx: Context,
         return ScreenXsResult(null, null, null, false)
     }
 
-    fun extractTextInScreen(area: Rect?): List<String>? {
+    fun extractTextInScreenCap(bm_: Bitmap, area: Rect?): List<String>? {
         if (area != null) {
             screenInspectionListener?.onAreaInspected(area)
         }
-        var bm = getScreenCap()
-        if (bm != null) {
-            Log.d(TAG, "extractTextInScreen with area: $area")
-            if (area != null) {
-                bm = BitmapUtil.cropScreenshotToSubArea(bm, area, UiUtil.getDisplaySize(ctx))
-                if (bm == null) {
-                    Log.e(TAG, "extractTextInScreen: could not crop bitmap.")
-                    return null
-                }
+        Log.d(TAG, "extractTextInScreen with area: $area")
+        var bm: Bitmap? = bm_
+        if (area != null) {
+            bm = BitmapUtil.cropScreenshotToSubArea(bm_, area, UiUtil.getDisplaySize(ctx))
+            if (bm == null) {
+                Log.e(TAG, "extractTextInScreen: could not crop bitmap.")
+                return null
             }
+        }
 
-            val text = mlKitOcrHelper.extractText(bm) ?: return null
-            val textBlocks = arrayListOf<String>()
-            for (tb in text.textBlocks) {
-                textBlocks.add(tb.text)
-            }
-            return textBlocks
+        val text = mlKitOcrHelper.extractText(bm!!) ?: return null
+        val textBlocks = arrayListOf<String>()
+        for (tb in text.textBlocks) {
+            textBlocks.add(tb.text)
+        }
+        return textBlocks
+    }
+
+    fun extractTextInScreen(area: Rect?): List<String>? {
+        val bm = getScreenCap()
+        if (bm != null) {
+            return extractTextInScreenCap(bm, area)
         }
         Log.e(TAG, "extractTextInScreen: could not get screen cap")
         return null

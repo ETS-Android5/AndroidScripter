@@ -7,6 +7,7 @@ import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizerOptions
 import com.tsiemens.androidscripter.util.SimpleFuture
+import java.lang.System.currentTimeMillis
 
 
 class MlKitOcrHelper {
@@ -17,11 +18,14 @@ class MlKitOcrHelper {
     }
 
     fun extractText(bm: Bitmap): Text? {
+        val startTime = currentTimeMillis()
         val image = InputImage.fromBitmap(bm, 0)
         val future = SimpleFuture<Text>()
         val res = recognizer.process(image)
             .addOnSuccessListener { visionText ->
+                val endTime = currentTimeMillis()
                 Log.d(TAG, "extractText text: " + visionText.text)
+                Log.d(TAG, "extractText took ${endTime - startTime} ms")
                 future.set(visionText)
             }
             .addOnFailureListener { e ->
